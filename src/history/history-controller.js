@@ -18,6 +18,12 @@ import {
   epochAnnouncement,
   buildStory
 } from './history-core.js';
+import { validateBirthday, loadStoryResult, storyAnnouncement, buildBirthdayStory, PAST_FIRST_YEAR } from './story-core.js';
+
+/** Texto de cada epoca: relato de cumpleanos (Misti Sound) o comparacion clasica. */
+function announce(result, which, lang) {
+  return result.story ? storyAnnouncement(result, which, lang) : epochAnnouncement(result, which, lang);
+}
 
 export const EPOCH_GAP_MS = 1000;
 
@@ -93,14 +99,14 @@ export function createHistoryController({
     if (epoch.value === null) return { ok: false, reason: 'noData' };
     silence();
     const token = playToken;
-    patch({ playing: { epoch: which, auto, phase: 'loading' }, lastPlay: kind, ended: false, playError: null });
+    patch({ playing: { epoch: which, auto, phase: 'loading' }, lastPlay: kind, ended: false, playError: null, viewing: which });
 
     // El globo y la linea de tiempo deben confirmar ESTA epoca antes de que
     // suene o hable nada; un fallo o una orden posterior no deja musica tardia.
     let shown = { ok: true };
     if (onShowEpoch) {
       try {
-        shown = (await onShowEpoch(epoch.period)) ?? { ok: true };
+        shown = (await onShowEpoch(epoch.period, { which, epoch, result: s0.history.result })) ?? { ok: true };
       } catch {
         shown = { ok: false, reason: 'error' };
       }
@@ -120,8 +126,13 @@ export function createHistoryController({
       const m = ensureMixer();
       m.setSeed(s.dj.seed || 'earth-jukebox');
       m.updateData({ temperature: epoch.value, rain: null, ice: null });
+      // Reproductor del relato (Misti Sound): pasado lento y estable, presente
+      // con un latido por anio que se acelera. Opcional: el mezclador clasico no lo tiene.
+      m.setStoryEpoch?.({ which, epoch, pastValue: s.history.result.a.value });
       patch({ playing: { epoch: which, auto, phase: 'music' } });
-      if (s.history.voice) narrator?.speak(epochAnnouncement(s.history.result, which, s.lang), s.lang);
+      if (s.history.voice) {
+        narrator?.speak(announce(s.history.result, which, s.lang), s.lang, { rate: which === 'a' ? 0.88 : 1.05 });
+      }
       m.start({ mode: 'composition', onEnd: () => handleEnd(which, auto, token) });
     } catch (err) {
       console.error('No se pudo iniciar la escucha', err);
@@ -183,15 +194,16 @@ export function createHistoryController({
     if (!narrator?.isSupported()) return { ok: false, reason: 'unsupported' };
     silence();
     patch({ playing: null, ended: false });
-    narrator.speak(buildStory(result, s.lang, { latestPeriod: latestPeriod() }).join(' '), s.lang);
+    const lines = result.story ? buildBirthdayStory(result, s.lang) : buildStory(result, s.lang, { latestPeriod: latestPeriod() });
+    narrator.speak(lines.join(' '), s.lang, { rate: 0.92 });
     return { ok: true };
   }
 
-  async function run({ point, placeLabel, periodA, periodB }) {
+  async function run({ point, placeLabel, periodA, periodB, loader }) {
     silence();
     patch({ status: 'loading', error: null, result: null, playing: null, lastPlay: null, ended: false, playError: null });
     const outcome = await runGuardedAction(coordinator, {
-      run: () => loadHistoryResult({ repository, point, periodA, periodB, placeLabel }),
+      run: loader ?? (() => loadHistoryResult({ repository, point, periodA, periodB, placeLabel })),
       onSuccess: ({ result }) => {
         patch({ status: 'ready', error: null, result });
         onShowPoint?.(result.point.lat, result.point.lon);
@@ -217,12 +229,57 @@ export function createHistoryController({
     });
   }
 
+  /**
+   * Relato de cumpleanos (Misti Sound): lugar + dia/mes (ano opcional).
+   * Compara la decada de 1950 con los ultimos 5 anios del mismo mes. Sin audio:
+   * al terminar la consulta el globo muestra el pasado (viewEpoch('a')).
+   */
+  async function submitStory({ place, day, month, year }) {
+    const placeCheck = validatePlace(place);
+    if (!placeCheck.ok) return { ok: false, reason: 'noPlace', field: 'place' };
+    const birthday = validateBirthday({ day, month, year }, repository.availablePeriods);
+    if (!birthday.ok) return { ...birthday, field: 'birth' };
+    return runStory({ point: { lat: place.lat, lon: place.lon }, placeLabel: place.label ?? null, ...birthday });
+  }
+
+  async function runStory({ point, placeLabel, day, month, year }) {
+    const out = await run({
+      point,
+      placeLabel,
+      loader: () => loadStoryResult({ repository, point, day, month, year, placeLabel })
+    });
+    if (out.ok) viewEpoch('a');
+    return out;
+  }
+
+  /**
+   * Muestra una epoca en el globo y la linea de tiempo SIN sonido (botones
+   * "Ver en el globo"). Ignora el resultado si llega tarde.
+   */
+  async function viewEpoch(which) {
+    const s = store.get();
+    const result = s.history.result;
+    if (!result || s.history.status !== 'ready' || (which !== 'a' && which !== 'b')) return { ok: false, reason: 'noResult' };
+    patch({ viewing: which });
+    if (!onShowEpoch) return { ok: true };
+    try {
+      return (await onShowEpoch(result[which].period, { which, epoch: result[which], result, silent: true })) ?? { ok: true };
+    } catch {
+      return { ok: false, reason: 'epochError' };
+    }
+  }
+
   /** Enlace compartido: punto y dos periodos. Sin audio. */
   function applyShared({ point, a, b }) {
     const placeCheck = validatePlace(point);
     if (!placeCheck.ok) return Promise.resolve({ ok: false, reason: 'noPlace', field: 'place' });
     if (!repository.hasPeriod(a) || !repository.hasPeriod(b)) {
       return Promise.resolve({ ok: false, reason: 'notAvailable', field: 'birth' });
+    }
+    // Un relato de cumpleanos se comparte como (1950-MM, ultimo MM): el enlace
+    // nunca lleva el dia exacto ni el nombre del lugar.
+    if (a === `${PAST_FIRST_YEAR}-${b.slice(5, 7)}` && a.slice(5, 7) === b.slice(5, 7)) {
+      return runStory({ point: { lat: point.lat, lon: point.lon }, placeLabel: null, day: null, month: Number(a.slice(5, 7)), year: null });
     }
     return run({ point: { lat: point.lat, lon: point.lon }, placeLabel: null, periodA: a, periodB: b });
   }
@@ -262,5 +319,5 @@ export function createHistoryController({
     if (h.playing && state.audio.muted) stop();
   }
 
-  return { submit, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce };
+  return { submit, submitStory, viewEpoch, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce };
 }

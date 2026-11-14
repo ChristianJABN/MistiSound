@@ -13,6 +13,16 @@ import {
   epochAnnouncement,
   MIN_QUERY_LENGTH
 } from '../history/history-core.js';
+import {
+  buildBirthdayStory,
+  storyAnnouncement,
+  pastLabel,
+  recentLabel,
+  reflectionMessage,
+  classroomQuestions,
+  formatBirthday
+} from '../history/story-core.js';
+import { shareStoryCard, storyCardText } from './story-card.js';
 
 export function createHistoryPanel({ store, controller, repository, loadCities, getGlobePoint, narrator }) {
   const $ = (id) => document.getElementById(id);
@@ -50,8 +60,24 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
   const audioHint = $('history-audio-hint');
   const missingEl = $('history-missing');
   const clearBtn = $('history-clear');
+  const dayInput = $('history-day');
+  const viewA = $('history-view-a');
+  const viewB = $('history-view-b');
+  const imageryEl = $('history-imagery');
+  const yearsEl = $('history-years');
+  const showReflectionBtn = $('history-show-reflection');
+  const reflection = $('history-reflection');
+  const reflectionTitle = $('history-reflection-title');
+  const reflectionText = $('history-reflection-text');
+  const cardShare = $('history-card-share');
+  const cardDownload = $('history-card-download');
+  const cardStatus = $('history-card-status');
+  const classList = $('history-class-questions');
 
   let place = null;
+  let reflectionOpen = false;
+  let reflectionKey = null;
+  let cardStatusKey = null;
   let formErrorKey = null;
   let searchToken = 0;
   let lastSearch = null;
@@ -79,7 +105,10 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     const text = formErrorKey ? t(lang(), formErrorKey.key, formErrorKey.params) : '';
     setText(formError, text);
     const invalid = Boolean(formErrorKey);
-    yearInput.setAttribute('aria-invalid', String(invalid && formErrorKey.key !== 'historyErrNoPlace'));
+    const dateInvalid = invalid && formErrorKey.key !== 'historyErrNoPlace';
+    const yearOnly = formErrorKey && ['storyErrYear', 'historyErrBefore', 'historyErrAfter', 'historyErrNotAvailable'].includes(formErrorKey.key);
+    yearInput.setAttribute('aria-invalid', String(dateInvalid && yearOnly));
+    dayInput.setAttribute('aria-invalid', String(dateInvalid && !yearOnly));
   }
 
   function setPlace(next) {
@@ -140,7 +169,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
         placeResults.replaceChildren();
         setText(placeStatus, '');
         showFormError(null);
-        yearInput.focus();
+        dayInput.focus();
       });
       li.appendChild(btn);
       placeResults.appendChild(li);
@@ -185,7 +214,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       const row = searchCities(catalog.rows, 'Iquitos').items[0];
       if (!row) throw new Error('Demo city missing from catalog');
       setPlace(cityRowToPlace(row));
-      monthSelect.value = '1'; yearInput.value = '1990';
+      dayInput.value = '14'; monthSelect.value = '1'; yearInput.value = '';
       lastSearch = null; placeResults.replaceChildren(); setText(placeStatus, '');
       form.requestSubmit();
     } catch {
@@ -210,7 +239,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     showFormError(null);
   });
 
-  for (const el of [yearInput, monthSelect]) {
+  for (const el of [dayInput, yearInput, monthSelect]) {
     el.addEventListener('input', () => {
       controller.cancelQuery();
       showFormError(null);
@@ -221,10 +250,12 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     ev.preventDefault();
     showFormError(null);
     const label = place ? (place.name ? formatPlaceLabel(place, lang()) : null) : null;
-    const outcome = await controller.submit({
+    reflectionOpen = false;
+    const outcome = await controller.submitStory({
       place: place ? { lat: place.lat, lon: place.lon, label } : null,
-      year: yearInput.value,
-      month: monthSelect.value
+      day: dayInput.value,
+      month: monthSelect.value,
+      year: yearInput.value
     });
     if (outcome.reason === 'stale') return;
     if (outcome.ok) {
@@ -233,8 +264,9 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     }
     const keys = {
       noPlace: ['historyErrNoPlace'],
-      empty: ['historyErrEmpty'],
-      invalid: ['historyErrInvalid'],
+      empty: ['storyErrEmpty'],
+      invalid: ['storyErrInvalid'],
+      invalidYear: ['storyErrYear'],
       beforeSource: ['historyErrBefore', { min: formatMonthYear(outcome.min ?? firstPeriod, lang()) }],
       afterLatest: ['historyErrAfter', { max: formatMonthYear(outcome.max ?? lastPeriod, lang()) }],
       notAvailable: ['historyErrNotAvailable'],
@@ -243,6 +275,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (keys[outcome.reason]) {
       showFormError(...keys[outcome.reason]);
       if (outcome.reason === 'noPlace') queryInput.focus();
+      else if (['empty', 'invalid'].includes(outcome.reason)) dayInput.focus();
       else yearInput.focus();
     }
   });
@@ -269,6 +302,27 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     await controller.repeat();
   });
   stopBtn.addEventListener('click', () => controller.stop());
+  viewA.addEventListener('click', () => controller.viewEpoch('a'));
+  viewB.addEventListener('click', () => controller.viewEpoch('b'));
+  showReflectionBtn.addEventListener('click', () => {
+    reflectionOpen = true;
+    render(store.get());
+    reflectionTitle.focus();
+  });
+  async function handleCard(forceDownload) {
+    const result = store.get().history.result;
+    if (!result?.story) return;
+    try {
+      const outcome = await shareStoryCard(result, lang(), { forceDownload });
+      cardStatusKey = outcome === 'shared' ? 'storyCardShared' : outcome === 'downloaded' ? 'storyCardDownloaded' : null;
+    } catch (err) {
+      console.error('No se pudo crear la tarjeta', err);
+      cardStatusKey = 'storyCardError';
+    }
+    setText(cardStatus, cardStatusKey ? t(lang(), cardStatusKey) : '');
+  }
+  cardShare.addEventListener('click', () => handleCard(false));
+  cardDownload.addEventListener('click', () => handleCard(true));
   voiceBox.addEventListener('change', () => controller.setVoice(voiceBox.checked));
   speakBtn.addEventListener('click', () => controller.speakStory());
   clearBtn.addEventListener('click', () => {
@@ -277,7 +331,9 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     lastSearch = null;
     queryInput.value = '';
     yearInput.value = '';
+    dayInput.value = '';
     monthSelect.value = '';
+    reflectionOpen = false;
     placeResults.replaceChildren();
     setText(placeStatus, '');
     showFormError(null);
@@ -313,11 +369,15 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (!result) return;
 
     const { a, b } = result;
-    const periodA = formatMonthYear(a.period, l);
-    const periodB = formatMonthYear(b.period, l);
+    const story = Boolean(result.story);
+    const periodA = story ? pastLabel(result, l) : formatMonthYear(a.period, l);
+    const periodB = story ? recentLabel(result, l) : formatMonthYear(b.period, l);
+    const placeText = result.placeLabel ?? formatCoords(result.point.lat, result.point.lon);
     setText(
       resultTitle,
-      t(l, 'historyResultTitle', { place: result.placeLabel ?? formatCoords(result.point.lat, result.point.lon) })
+      story
+        ? t(l, 'storyResultTitle', { birthday: formatBirthday(result.birthday, l), place: placeText })
+        : t(l, 'historyResultTitle', { place: placeText })
     );
 
     const noDataWord = t(l, 'historyNoData');
@@ -346,12 +406,12 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       `${t(l, 'historyCardDelta', { delta: result.delta === null ? t(l, 'historySummaryNoDelta') : deg(result.delta) })} · ${t(l, 'historyCardBaseline', { baseline: baselineText })}`
     );
 
-    const story = buildStory(result, l, { latestPeriod: lastPeriod });
-    const storySig = `${l}|${story.join('|')}`;
+    const storyLines = story ? buildBirthdayStory(result, l) : buildStory(result, l, { latestPeriod: lastPeriod });
+    const storySig = `${l}|${storyLines.join('|')}`;
     if (sigs.get('story') !== storySig) {
       sigs.set('story', storySig);
       storyEl.replaceChildren();
-      for (const line of story) {
+      for (const line of storyLines) {
         const p = document.createElement('p');
         p.textContent = line;
         storyEl.appendChild(p);
@@ -371,6 +431,12 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
         t(l, 'historyDataDelta'),
         result.delta === null ? noData : `${formatDegrees(result.delta, { signed: true })} °C`
       ],
+      ...(story
+        ? [...a.series, ...b.series].map((s) => [
+            formatMonthYear(s.period, l),
+            s.value === null ? noData : `${formatDegrees(s.value, { signed: true })} °C`
+          ])
+        : []),
       [
         t(l, 'historyDataSource'),
         t(l, 'historyDataSourceValue', {
@@ -420,11 +486,85 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (h.playError) status = t(l, h.playError === 'epoch' ? 'historyEpochError' : 'historyStartError');
     else if (h.playing?.phase === 'loading') status = t(l, 'historyPlayingLoading');
     else if (h.playing?.phase === 'gap') status = t(l, 'historyPlayingGap');
-    else if (h.playing) status = t(l, 'historyPlayingNow', { announce: epochAnnouncement(result, h.playing.epoch, l) });
-    else if (h.ended) status = t(l, 'historyEnded');
+    else if (h.playing) {
+      const announce = story ? storyAnnouncement(result, h.playing.epoch, l) : epochAnnouncement(result, h.playing.epoch, l);
+      status = t(l, 'historyPlayingNow', { announce });
+    } else if (h.ended) status = t(l, story ? 'storyEnded' : 'historyEnded');
     setText(playStatus, status);
 
     setText(missingEl, t(l, 'historyMissing'));
+    renderStoryExtras(state, result);
+  }
+
+  /** Ver cada epoca en el globo, los 5 anios con su latido y la reflexion final. */
+  function renderStoryExtras(state, result) {
+    const l = state.lang;
+    const h = state.history;
+    const story = Boolean(result.story);
+    viewA.hidden = !story;
+    viewB.hidden = !story;
+    yearsEl.hidden = !story;
+    showReflectionBtn.hidden = !story;
+    if (!story) {
+      setText(imageryEl, '');
+      reflection.hidden = true;
+      return;
+    }
+    setText(viewA, t(l, 'storyViewPast', { label: pastLabel(result, l) }));
+    setText(viewB, t(l, 'storyViewRecent', { label: recentLabel(result, l) }));
+    viewA.setAttribute('aria-pressed', String(h.viewing === 'a'));
+    viewB.setAttribute('aria-pressed', String(h.viewing === 'b'));
+
+    let imageryText = '';
+    if (h.viewing) {
+      const tempKey = h.viewing === 'a' ? 'storyGlobeTempPast' : 'storyGlobeTempRecent';
+      const tempPeriod = formatMonthYear(result[h.viewing].period, l);
+      imageryText = t(l, tempKey, { period: tempPeriod });
+      if (h.imagery) {
+        const imgKey = h.imagery.kind === 'annual' ? 'storyImageryPast' : 'storyImageryRecent';
+        imageryText += ` ${t(l, imgKey, { satellite: h.imagery.satellite, year: h.imagery.year, date: h.imagery.date })}`;
+      }
+      imageryText += ` ${t(l, 'storyZoomHint')}`;
+    }
+    setText(imageryEl, imageryText);
+
+    yearsEl.setAttribute('aria-label', t(l, 'storyYearsLabel'));
+    const playingYear = h.playing?.epoch === 'b' && h.playing.phase === 'music' ? h.beat?.year : null;
+    const yearsSig = `${l}|${playingYear}|${h.beat?.bpm}|${JSON.stringify(result.b.series)}`;
+    if (sigs.get('years') !== yearsSig) {
+      sigs.set('years', yearsSig);
+      yearsEl.replaceChildren(
+        ...result.b.series.map((s) => {
+          const li = document.createElement('li');
+          if (s.year === playingYear) li.className = 'is-playing';
+          const value = document.createElement('b');
+          value.textContent = s.value === null ? t(l, 'historyNoData') : `${formatDegrees(s.value, { signed: true })} °C`;
+          li.append(String(s.year), value);
+          if (s.year === playingYear && h.beat?.bpm) li.append(t(l, 'storyBpm', { bpm: h.beat.bpm }));
+          return li;
+        })
+      );
+    }
+
+    const open = reflectionOpen || h.ended;
+    reflection.hidden = !open;
+    showReflectionBtn.hidden = open;
+    if (open) {
+      const key = `${l}|${result.key}`;
+      if (reflectionKey !== key) {
+        reflectionKey = key;
+        setText(reflectionText, reflectionMessage(result, l));
+        classList.replaceChildren(
+          ...classroomQuestions(l).map((q) => {
+            const li = document.createElement('li');
+            li.textContent = q;
+            return li;
+          })
+        );
+        cardShare.setAttribute('aria-description', storyCardText(result, l));
+      }
+      setText(cardStatus, cardStatusKey ? t(l, cardStatusKey) : '');
+    }
   }
 
   function render(state) {
@@ -452,7 +592,10 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
   /** Enlace compartido: rellena el formulario con los dos periodos y consulta (sin audio). */
   async function showShared({ point, a, b }) {
     setPlace({ lat: point.lat, lon: point.lon });
-    yearInput.value = a.slice(0, 4);
+    // Relato compartido (1950-MM, ultimo MM): sin dia ni ano (privacidad).
+    const isStory = a.startsWith('1950-') && a.slice(5, 7) === b.slice(5, 7);
+    yearInput.value = isStory ? '' : a.slice(0, 4);
+    dayInput.value = '';
     monthSelect.value = String(Number(a.slice(5, 7)));
     showFormError(null);
     const outcome = await controller.applyShared({ point, a, b });

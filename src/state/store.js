@@ -47,7 +47,7 @@ export function createInitialState({ lang }) {
     compare: { a: null, b: null, pointKey: null },
     globeError: null,
     imageryError: false,
-    activeTab: 'history', // 'history' | 'explore' | 'peru' | 'accessible' | 'dj'
+    activeTab: 'history', // 'history' | 'explore' | 'peru' | 'accessible' | 'dj' | 'jukebox'
     narration: { speaking: false, lang: null },
     // narrationAuto: opt-in, por defecto OFF (no competir con lector de
     // pantalla). Cuando esta activo, se anuncia por voz el estado
@@ -71,6 +71,9 @@ export function createHistoryState() {
     lastPlay: null, // 'a' | 'b' | 'auto'
     ended: false,
     playError: null, // null | 'epoch' | 'start': por que no arranco la escucha
+    viewing: null, // 'a' | 'b': epoca que muestra el globo en el relato de cumpleanos
+    imagery: null, // imagen satelital con fecha mostrada (src/globe/dated-imagery.js)
+    beat: null, // compas del presente que esta sonando: { year, bpm, tension }
     voice: false // anuncio por voz de cada epoca: opt-in, desactivado por defecto
   };
 }

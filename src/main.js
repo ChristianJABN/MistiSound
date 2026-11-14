@@ -19,10 +19,13 @@ import { createPeruPanel } from './ui/peru-panel.js';
 import { createAccessiblePanel } from './ui/accessible-panel.js';
 import { createDjPanel } from './ui/dj-panel.js';
 import { createEicPanel } from './ui/eic-panel.js';
+import { createEicJukeboxPanel } from './ui/eic-jukebox-panel.js';
 import { createHistoryPanel } from './ui/history-panel.js';
 import { createHistoryController } from './history/history-controller.js';
 import { loadCityCatalog } from './history/cities.js';
 import { DjMixer } from './audio/mixer.js';
+import { StoryPlayer } from './history/story-player.js';
+import { imageryForEpoch, createDatedImageryLayer } from './globe/dated-imagery.js';
 import { createTabs } from './ui/tabs.js';
 import { createShare, resolvePresetPeriod, ALLOWED_DJ_CHANNELS } from './sharing/preset.js';
 import { createNarrator } from './accessibility/narration.js';
@@ -41,6 +44,37 @@ let overlayGeneration = 0;
 let globeHandle = null;
 let pointMarker = null;
 let showAnomalies = false;
+
+// Imagen satelital con fecha del relato de cumpleanos (NASA GIBS, ver
+// src/globe/dated-imagery.js). Solo vive en "Tu historia" con un resultado.
+let datedImageryLayer = null;
+let datedImageryKey = null;
+
+function showDatedImagery(which, birthday) {
+  const viewer = globeHandle?.viewer;
+  const spec = imageryForEpoch(which, birthday);
+  const key = spec ? `${spec.layer}|${spec.date}` : null;
+  store.set((st) => ({ history: { ...st.history, imagery: spec } }));
+  if (!viewer || key === datedImageryKey) return;
+  clearDatedImagery({ keepState: true });
+  if (!spec) return;
+  try {
+    datedImageryLayer = createDatedImageryLayer(Cesium, viewer, spec);
+    datedImageryKey = key;
+  } catch (err) {
+    console.error('No se pudo crear la capa satelital con fecha', err);
+  }
+  viewer.scene.requestRender();
+}
+
+function clearDatedImagery({ keepState = false } = {}) {
+  const viewer = globeHandle?.viewer;
+  if (datedImageryLayer && viewer) viewer.imageryLayers.remove(datedImageryLayer, true);
+  datedImageryLayer = null;
+  datedImageryKey = null;
+  if (!keepState && store.get().history.imagery) store.set((st) => ({ history: { ...st.history, imagery: null } }));
+  viewer?.scene.requestRender();
+}
 
 function applyStaticTexts() {
   for (const el of document.querySelectorAll('[data-i18n]')) {
@@ -412,6 +446,7 @@ async function init() {
     onExplorePoint: (lat, lon) => selectPoint(lat, lon, { fly: true })
   });
   const eicPanel = createEicPanel({ store, audioEngine });
+  const jukeboxPanel = createEicJukeboxPanel({ store, audioEngine, narrator });
   // dj-panel/eic-panel construyen su DOM con data-i18n DESPUES de la
   // primera applyStaticTexts() de arriba: se vuelve a aplicar para que sus
   // textos no queden vacios en el primer render.
@@ -428,15 +463,19 @@ async function init() {
     repository: historyRepository,
     audioEngine,
     narrator,
+    // Relato de cumpleanos: pasado lento y presente con latido acelerado
+    // (src/history/story-music.js). Cada compas del presente se publica en el
+    // store para que la tarjeta muestre "2024 · 98 BPM".
     createMixer: () =>
-      new DjMixer({
+      new StoryPlayer({
         ToneLib: audioEngine.Tone,
-        bus: audioEngine.getBus(),
-        seed: store.get().dj.seed || 'earth-jukebox',
-        bpm: store.get().dj.bpm
+        getBus: () => audioEngine.getBus(),
+        onBar: (bar) => store.set((st) => ({ history: { ...st.history, beat: bar } }))
       }),
     onShowPoint: (lat, lon) => selectPoint(lat, lon, { fly: true, sonify: false, internal: true }),
-    onShowEpoch: async (period) => {
+    onShowEpoch: async (period, ctx = {}) => {
+      if (ctx.result?.story) showDatedImagery(ctx.which, ctx.result.birthday);
+      else clearDatedImagery();
       const r = await changePeriod(repository, period, { sonify: false });
       const s = store.get();
       if (r.ok && s.confirmedPeriod === period && s.overlayError !== period) return { ok: true };
@@ -671,8 +710,10 @@ async function init() {
     accessiblePanel.render(state);
     djPanel.render(state);
     eicPanel.render(state);
+    jukeboxPanel.render(state);
     historyPanel.render(state);
     historyController.enforce(state);
+    if (datedImageryLayer && (state.activeTab !== 'history' || state.history.status !== 'ready')) clearDatedImagery();
     share.render(state);
     aurora.render(state);
     maybeAutoNarrate(state);
@@ -685,6 +726,7 @@ async function init() {
   accessiblePanel.render(store.get());
   djPanel.render(store.get());
   eicPanel.render(store.get());
+  jukeboxPanel.render(store.get());
   historyPanel.render(store.get());
   share.render(store.get());
 

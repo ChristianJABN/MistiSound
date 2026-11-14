@@ -30,6 +30,7 @@
           <button type="button" class="tab-btn" data-tab="peru" aria-pressed="false" data-i18n="tabPeru"></button>
           <button type="button" class="tab-btn" data-tab="accessible" aria-pressed="false" data-i18n="tabAccessible"></button>
           <button type="button" class="tab-btn" data-tab="dj" aria-pressed="false" data-i18n="tabDj"></button>
+          <button type="button" class="tab-btn" data-tab="jukebox" aria-pressed="false" data-i18n="tabJukebox"></button>
         </nav>
         <div class="header-tools"><button type="button" id="effects-toggle" class="effects-toggle" aria-pressed="true"><span aria-hidden="true">✧</span><span data-i18n="auroraEffects"></span></button>
         <div id="lang-switch" role="group" aria-label="Idioma / Language">
@@ -85,13 +86,17 @@
               <p id="history-place-chosen"></p>
               </div>
               <div class="history-when-group">
-                <div class="when-pair">
+                <div class="when-pair when-trio">
                   <div class="form-row">
-                    <label for="history-month" data-i18n="historyMonthLabel"></label>
+                    <label for="history-day" data-i18n="storyDayLabel"></label>
+                    <input type="text" id="history-day" placeholder="14" inputmode="numeric" maxlength="2" autocomplete="off" aria-describedby="history-form-error" />
+                  </div>
+                  <div class="form-row">
+                    <label for="history-month" data-i18n="storyMonthLabel"></label>
                     <select id="history-month"></select>
                   </div>
                   <div class="form-row">
-                    <label for="history-year" data-i18n="historyYearLabel"></label>
+                    <label for="history-year" data-i18n="storyYearLabel"></label>
                     <input type="text" id="history-year" placeholder="1990" inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="history-birth-note history-form-error" />
                   </div>
                 </div>
@@ -215,6 +220,7 @@
           </div>
 
           <div id="dj-panel" hidden aria-label="DJ"></div>
+          <div id="jukebox-panel" hidden aria-label="Jukebox EIC"></div>
 
 
         </aside>
@@ -243,6 +249,13 @@
                 </article>
                 <p class="compare-delta" id="history-card-delta" aria-hidden="true"></p>
               </div>
+              <div id="history-view" role="group" aria-labelledby="history-view-label">
+                <p id="history-view-label" class="eyebrow" data-i18n="storyViewLabel"></p>
+                <button type="button" id="history-view-a" class="secondary-btn" aria-pressed="false"></button>
+                <button type="button" id="history-view-b" class="secondary-btn" aria-pressed="false"></button>
+                <p id="history-imagery" class="field-help"></p>
+              </div>
+              <ol id="history-years" class="year-beats" aria-label=""></ol>
               <p id="history-short-note" class="field-help" data-i18n="historyShortNote"></p>
               <div id="history-actions" class="button-row">
                 <button type="button" id="history-listen-auto" class="secondary-btn"></button>
@@ -275,6 +288,19 @@
               </details>
               <p id="history-play-status" role="status"></p>
               <p id="history-audio-hint"></p>
+              <button type="button" id="history-show-reflection" class="demo-btn" data-i18n="storyShowReflection"></button>
+              <section id="history-reflection" hidden aria-labelledby="history-reflection-title">
+                <h3 id="history-reflection-title" tabindex="-1" data-i18n="storyReflectTitle"></h3>
+                <p id="history-reflection-text"></p>
+                <div class="button-row">
+                  <button type="button" id="history-card-share" class="action-btn" data-i18n="storyShareCard"></button>
+                  <button type="button" id="history-card-download" class="secondary-btn" data-i18n="storyDownloadCard"></button>
+                </div>
+                <p id="history-card-status" role="status"></p>
+                <details class="listening-options"><summary data-i18n="storyClassTitle"></summary>
+                  <ul id="history-class-questions"></ul>
+                </details>
+              </section>
             </section>
         </aside>
       </main>

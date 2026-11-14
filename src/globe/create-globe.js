@@ -58,7 +58,7 @@ export function createGlobe(container) {
   viewer.scene.screenSpaceCameraController.enableTilt = true;
   viewer.scene.screenSpaceCameraController.enableRotate = true;
   viewer.scene.screenSpaceCameraController.enableZoom = true;
-  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 400_000;
+  viewer.scene.screenSpaceCameraController.minimumZoomDistance = 3_000; // permite acercarse a una ciudad (Landsat ~30 m en Tu historia)
   viewer.scene.screenSpaceCameraController.maximumZoomDistance = 30_000_000;
 
   const overviewDestination = () => Cesium.Cartesian3.fromDegrees(-68, -8, globeOverviewHeight(viewer));

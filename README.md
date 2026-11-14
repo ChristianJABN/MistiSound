@@ -5,12 +5,13 @@ sonificacion (Tone.js) de datos climaticos terrestres, sin backend.
 
 ## Estado actual
 
-- **Tu historia con la Tierra** (tarea 15, pestana inicial): elige una
-  ciudad (catalogo GeoNames local, CC BY 4.0) y el mes y ano en que naciste;
-  compara la anomalia de ese mes con el ultimo mes real disponible (2026-08)
-  y escucha ANTES y DESPUES con la misma frase, semilla, tempo y volumen.
-  Solo anomalias mensuales (no temperatura absoluta ni el clima del dia).
-  Secuencia automatica y voz son opt-in; nunca suena sola.
+- **Tu cumpleaños en la Tierra** (pestaña "Tu historia", storytelling de Misti Sound):
+  lugar + día/mes de cumpleaños (año opcional). Suena el mes en los años 50
+  (lento y estable, voz serena) frente a los últimos 5 años (un latido por año
+  que se acelera con el calor). El globo viaja a 1950 sin necesidad de sonido,
+  con foto satelital NASA GIBS con fecha (Landsat 1985 / MODIS del día del
+  cumpleaños) y zoom hasta 3 km. Al final: reflexión, tarjeta PNG para redes y
+  preguntas para clase. Ver `docs/storytelling.md`.
 - **Explorar**: globo 3D + GISTEMP mensual 1880-01 a 2026-08 (rejilla 2°), overlay
   numerico, comparacion A/B, compartir por enlace.
 - **Peru**: historias climaticas con celda GISTEMP mas cercana.
@@ -38,6 +39,13 @@ sonificacion (Tone.js) de datos climaticos terrestres, sin backend.
   rangos y cuantizacion en `docs/sonification-rules.md`. Los enlaces
   compartidos pasan a preset v3 (con bloque `music`); los v2 abren sin
   autoplay y con aviso.
+- **Jukebox EIC** (pestana propia): elige un mapa anual oficial del Earth
+  Information Center (NASA SVS 2022, 2023, 2024 [promedio 24 meses] y 2025);
+  la app lee sus colores con la leyenda de la propia imagen (vision por
+  computador en el navegador) y lo toca de oeste a este con un cursor sobre
+  el mapa. Descripcion en texto y en voz para personas ciegas o con baja
+  vision. Frames: `node scripts/prepare_eic_frames.mjs`; metodo y regla
+  musical en `docs/eic-jukebox.md`.
 - **Recursos EIC** (nuevo, en Explorar): mapa anual oficial NASA SVS 2025 +
   indicador GLOBAL ANUAL (+1.19 °C, mismo dataset/baseline) sonificable.
   Solo se ofrece 2025 (unico anio con frame y dato verificados juntos; ver

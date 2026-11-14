@@ -53,7 +53,7 @@ export const ALLOWED_LANGS = ['es', 'en'];
 // real. Hielo (NOAA/NSIDC G02135, 2023 completo) SI tiene datos reales
 // desde fase 9: ver src/data/sea-ice-repository.js.
 export const ALLOWED_DJ_CHANNELS = ['temperature', 'rain', 'ice'];
-export const ALLOWED_MODES = ['explore', 'peru', 'accessible', 'dj', 'history'];
+export const ALLOWED_MODES = ['explore', 'peru', 'accessible', 'dj', 'history', 'jukebox'];
 
 const GAIN_DB_MIN = -40;
 const GAIN_DB_MAX = 0;

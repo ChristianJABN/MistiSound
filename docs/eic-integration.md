@@ -1,4 +1,6 @@
 # Integracion con un recurso oficial del Earth Information Center (EIC)
+> Actualizacion: la pestana **Jukebox EIC** (ver `docs/eic-jukebox.md`) si lee los pixeles de mapas SVS, pero copiados localmente (sin CORS) y declarando el resultado como lectura visual aproximada del color. Este documento describe el panel separado "Recursos EIC" de Explorar, que sigue sin leer pixeles.
+
 
 Version final y corta de esta investigacion. Reemplaza la version anterior
 (que recomendaba la espiral SVS 5190 como fondo "ilustrativo"): ese recurso

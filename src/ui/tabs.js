@@ -1,5 +1,5 @@
 /**
- * Pestanas Historia / Explorar / Peru / Accesible / DJ. Implementadas como un grupo simple
+ * Pestanas Historia / Explorar / Peru / Accesible / DJ / Jukebox EIC. Implementadas como un grupo simple
  * de botones nativos (igual que el selector de idioma), no como el patron
  * ARIA "tabs" con roving tabindex y flechas: eso evita tener que
  * interceptar teclas, y un grupo de botones normales ya es perfectamente
@@ -13,7 +13,8 @@ export function createTabs({ store }) {
     explore: document.getElementById('explore-panel'),
     peru: document.getElementById('peru-panel'),
     accessible: document.getElementById('accessible-panel'),
-    dj: document.getElementById('dj-panel')
+    dj: document.getElementById('dj-panel'),
+    jukebox: document.getElementById('jukebox-panel')
   };
 
   for (const btn of buttons) {

@@ -19,7 +19,8 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
   const headings = {
     history: ['historyTitle', 'auroraIntro'], explore: ['auroraExploreTitle', 'auroraExploreIntro'],
     peru: ['auroraPeruTitle', 'auroraPeruIntro'], accessible: ['auroraAccessibleTitle', 'auroraAccessibleIntro'],
-    dj: ['auroraDjTitle', 'auroraDjIntro']
+    dj: ['auroraDjTitle', 'auroraDjIntro'],
+    jukebox: ['auroraJukeboxTitle', 'auroraJukeboxIntro']
   };
   let effectsWanted = true;
   try { effectsWanted = localStorage.getItem('earth-jukebox-effects') !== 'off'; } catch { /* Local preference is optional. */ }

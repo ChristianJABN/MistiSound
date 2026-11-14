@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "generated_by": "scripts/prepare_eic_frames.mjs",
+  "license_note": "Contenido de NASA SVS en dominio publico salvo indicacion contraria (https://svs.gsfc.nasa.gov/help/). Credito: NASA Scientific Visualization Studio.",
+  "reading_note": "Los valores en grados C que la app deriva de estos frames son una LECTURA VISUAL del color usando la leyenda de cada imagen (aprox.), no el dato numerico de GISTEMP. Cada anio usa su propia escala de color.",
+  "frames": [
+    {
+      "id": "gistemp-2025",
+      "year": 2025,
+      "dataset": "GISTEMP v4",
+      "baseline_period": "1951-1980",
+      "period": {
+        "kind": "single-year",
+        "label_es": "Año 2025",
+        "label_en": "Year 2025"
+      },
+      "representation_source": "Caption SVS: \"2025 Global Temperature Anomalies (smoothed)\".",
+      "colormap": "vik (azul - blanco - rojo oscuro), -4..+4 C",
+      "projection": "Robinson",
+      "svs_id": 5603,
+      "page_url": "https://svs.gsfc.nasa.gov/5603/",
+      "page_title": "Global Temperature Anomalies from 1880 to 2025",
+      "source_url": "https://svs.gsfc.nasa.gov/vis/a000000/a005600/a005603/Map_HD_2025.png",
+      "source_sha256": "f27a7d7c75690025c3eabf5a50cc1c1c27768a4f17debcffa513b2aea97e472e",
+      "source_size": "1920x1080",
+      "source_last_modified": "Mon, 12 Jan 2026 20:28:58 GMT",
+      "fetched_utc": "2026-11-14T16:42:04.683Z",
+      "file": "data/eic/frames/gistemp-2025.png",
+      "width": 960,
+      "height": 540,
+      "legend": {
+        "axis": "x",
+        "fixed": 507,
+        "from": 330,
+        "to": 630,
+        "valueFrom": -4,
+        "valueTo": 4,
+        "sampleFrom": 332,
+        "sampleTo": 629
+      },
+      "map": {
+        "x0": 59,
+        "y0": 56,
+        "x1": 881,
+        "y1": 473,
+        "exclude": []
+      },
+      "credit": "NASA Scientific Visualization Studio / NASA GISS (GISTEMP v4)"
+    },
+    {
+      "id": "gistemp-2024",
+      "year": 2024,
+      "dataset": "GISTEMP v4",
+      "baseline_period": "1951-1980",
+      "period": {
+        "kind": "rolling-24-month",
+        "label_es": "Promedio móvil de 24 meses que termina en 2024 (2023-2024)",
+        "label_en": "24-month running average ending in 2024 (2023-2024)"
+      },
+      "representation_source": "Descripcion SVS: \"The maps are averages over a running 24 month window. The final frame represents global temperature anomalies in 2024.\"",
+      "colormap": "giss_navy (azul marino - blanco - amarillo - rojo), -2..+2 C",
+      "projection": "Robinson",
+      "svs_id": 5450,
+      "page_url": "https://svs.gsfc.nasa.gov/5450/",
+      "page_title": "Global Temperature Anomalies from 1880 to 2024",
+      "source_url": "https://svs.gsfc.nasa.gov/vis/a000000/a005400/a005450/2024GISTEMPMap_2K.png",
+      "source_sha256": "ddbd57640789b4d60fe1dd0c57bd7563d7ad9d109732dcada2d814c3fa957cbe",
+      "source_size": "1920x1080",
+      "source_last_modified": "Fri, 07 Mar 2025 17:56:28 GMT",
+      "fetched_utc": "2026-11-14T16:42:21.477Z",
+      "file": "data/eic/frames/gistemp-2024.png",
+      "width": 960,
+      "height": 540,
+      "legend": {
+        "axis": "y",
+        "fixed": 39,
+        "from": 393,
+        "to": 528,
+        "valueFrom": 2,
+        "valueTo": -2,
+        "sampleFrom": 394,
+        "sampleTo": 526
+      },
+      "map": {
+        "x0": 12,
+        "y0": 5,
+        "x1": 950,
+        "y1": 480,
+        "exclude": [
+          {
+            "x0": 0,
+            "y0": 380,
+            "x1": 85,
+            "y1": 540
+          }
+        ]
+      },
+      "credit": "NASA Scientific Visualization Studio / NASA GISS (GISTEMP v4)"
+    },
+    {
+      "id": "gistemp-2023",
+      "year": 2023,
+      "dataset": "GISTEMP v4",
+      "baseline_period": "1951-1980",
+      "period": {
+        "kind": "single-year",
+        "label_es": "Año 2023",
+        "label_en": "Year 2023"
+      },
+      "representation_source": "Caption SVS: \"This color-coded map in Robinson projection of the 2023 global surface temperature anomalies.\"",
+      "colormap": "giss_navy (azul marino - blanco - amarillo - rojo), -2..+2 C (misma tabla de color que la pagina lista: giss_navy_anomaly_Vertical-both.png)",
+      "projection": "Robinson",
+      "svs_id": 5207,
+      "page_url": "https://svs.gsfc.nasa.gov/5207/",
+      "page_title": "Global Temperature Anomalies from 1880 to 2023",
+      "source_url": "https://svs.gsfc.nasa.gov/vis/a000000/a005200/a005207/2023AverageTemp_HD.png",
+      "source_sha256": "76e00e95d5b730e7eb0977547bbab9ca175916cbe799aa2cde120283e3d3e80e",
+      "source_size": "1920x1080",
+      "source_last_modified": "Wed, 10 Jan 2024 20:18:56 GMT",
+      "fetched_utc": "2026-11-14T16:42:33.168Z",
+      "file": "data/eic/frames/gistemp-2023.png",
+      "width": 960,
+      "height": 540,
+      "legend": {
+        "axis": "y",
+        "fixed": 50,
+        "from": 432,
+        "to": 520,
+        "valueFrom": 2,
+        "valueTo": -2,
+        "sampleFrom": 434,
+        "sampleTo": 519
+      },
+      "map": {
+        "x0": 12,
+        "y0": 8,
+        "x1": 950,
+        "y1": 485,
+        "exclude": [
+          {
+            "x0": 20,
+            "y0": 410,
+            "x1": 80,
+            "y1": 540
+          }
+        ]
+      },
+      "credit": "NASA Scientific Visualization Studio / NASA GISS (GISTEMP v4)"
+    },
+    {
+      "id": "gistemp-2022",
+      "year": 2022,
+      "dataset": "GISTEMP v4",
+      "baseline_period": "1951-1980",
+      "period": {
+        "kind": "single-year",
+        "label_es": "Año 2022",
+        "label_en": "Year 2022"
+      },
+      "representation_source": "Caption SVS: \"This image is the single year 2022 GISS temperature anomaly as compared with the 1951-1980 average.\"",
+      "colormap": "giss_navy (azul marino - blanco - amarillo - rojo), -2..+2 C",
+      "projection": "Robinson",
+      "svs_id": 5060,
+      "page_url": "https://svs.gsfc.nasa.gov/5060/",
+      "page_title": "Global Temperature Anomalies from 1880 to 2022",
+      "source_url": "https://svs.gsfc.nasa.gov/vis/a000000/a005000/a005060/2022GISTEMP-anomaly-notitles.png",
+      "source_sha256": "d91df73390795258367d7477de995e2a7bb6cd7588651dfd8510daaf43df8dd7",
+      "source_size": "1920x1080",
+      "source_last_modified": "Thu, 12 Jan 2023 14:07:04 GMT",
+      "fetched_utc": "2026-11-14T16:43:20.075Z",
+      "file": "data/eic/frames/gistemp-2022.png",
+      "width": 960,
+      "height": 540,
+      "legend": {
+        "axis": "y",
+        "fixed": 31,
+        "from": 22,
+        "to": 127,
+        "valueFrom": 2,
+        "valueTo": -2,
+        "sampleFrom": 24,
+        "sampleTo": 126
+      },
+      "map": {
+        "x0": 0,
+        "y0": 0,
+        "x1": 960,
+        "y1": 540,
+        "exclude": [
+          {
+            "x0": 0,
+            "y0": 0,
+            "x1": 50,
+            "y1": 145
+          }
+        ]
+      },
+      "credit": "NASA Scientific Visualization Studio / NASA GISS (GISTEMP v4)"
+    }
+  ]
+}

@@ -79,11 +79,14 @@ export function createNarrator({ audioEngine } = {}) {
    * Devuelve false si la API no esta disponible (la UI debe mostrar el
    * texto igual, de forma no condicionada a esto).
    */
-  function speak(text, lang) {
+  function speak(text, lang, { rate = 1 } = {}) {
     if (!synth || !text) return false;
     cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang === 'en' ? 'en-US' : 'es-PE';
+    // Ritmo de la voz: mas lento y sereno en el pasado del relato, algo mas
+    // rapido en el presente (ver story-core.js). Acotado a un rango comodo.
+    utterance.rate = Math.min(1.3, Math.max(0.7, Number(rate) || 1));
     const voice = pickVoice(synth, lang);
     if (voice) utterance.voice = voice;
     // La voz sigue el volumen maestro y el mute (ganancia lineal 0..1
