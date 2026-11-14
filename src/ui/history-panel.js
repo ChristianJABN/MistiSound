@@ -23,8 +23,13 @@ import {
   formatBirthday
 } from '../history/story-core.js';
 import { shareStoryCard, storyCardText } from './story-card.js';
+import { ensureAudio } from '../app/ensure-audio.js';
 
-export function createHistoryPanel({ store, controller, repository, loadCities, getGlobePoint, narrator }) {
+export function createHistoryPanel({ store, controller, repository, loadCities, getGlobePoint, narrator, audioEngine }) {
+  const withAudio = async (fn) => {
+    if (audioEngine && !(await ensureAudio({ audioEngine, store }))) return undefined;
+    return fn();
+  };
   const $ = (id) => document.getElementById(id);
   const form = $('history-form');
   const queryInput = $('history-place-q');
@@ -211,16 +216,55 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     try {
       const catalog = await loadCities();
       if (token !== searchToken || store.get().activeTab !== 'history') return;
-      const row = searchCities(catalog.rows, 'Iquitos').items[0];
+      const row = searchCities(catalog.rows, 'Arequipa').items[0];
       if (!row) throw new Error('Demo city missing from catalog');
       setPlace(cityRowToPlace(row));
-      dayInput.value = '14'; monthSelect.value = '1'; yearInput.value = '';
+      dayInput.value = '15'; monthSelect.value = '8'; yearInput.value = '';
       lastSearch = null; placeResults.replaceChildren(); setText(placeStatus, '');
       form.requestSubmit();
     } catch {
       if (token !== searchToken) return;
       lastSearch = { state: 'error' }; renderSearchResults();
     }
+  });
+  let liveTimer = null;
+  queryInput.addEventListener('input', () => {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(runSearch, 250);
+  });
+  $('history-locate')?.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      showFormError('locateUnsupported');
+      return;
+    }
+    setText(placeStatus, t(lang(), 'locateSearching'));
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        try {
+          const catalog = await loadCities();
+          let best = null;
+          let bestD = Infinity;
+          for (const row of catalog.rows) {
+            const d = (row[3] - lat) ** 2 + ((row[4] - lon) * Math.cos((lat * Math.PI) / 180)) ** 2;
+            if (d < bestD) {
+              bestD = d;
+              best = row;
+            }
+          }
+          setPlace(best ? cityRowToPlace(best) : { lat, lon });
+        } catch {
+          setPlace({ lat, lon });
+        }
+        setText(placeStatus, '');
+        showFormError(null);
+      },
+      () => {
+        setText(placeStatus, '');
+        showFormError('locateDenied');
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+    );
   });
   queryInput.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') {
@@ -248,6 +292,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (audioEngine) ensureAudio({ audioEngine, store });
     showFormError(null);
     const label = place ? (place.name ? formatPlaceLabel(place, lang()) : null) : null;
     reflectionOpen = false;
@@ -260,6 +305,8 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (outcome.reason === 'stale') return;
     if (outcome.ok) {
       focusResultTitle();
+      // "Escuchar mi fecha": el clic del usuario es el gesto que permite sonar.
+      if (audioEngine && !store.get().audio.muted) await withAudio(() => controller.playAuto());
       return;
     }
     const keys = {
@@ -289,18 +336,10 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     }
   }
 
-  listenA.addEventListener('click', async () => {
-    await controller.play('a');
-  });
-  listenB.addEventListener('click', async () => {
-    await controller.play('b');
-  });
-  listenAuto.addEventListener('click', async () => {
-    await controller.playAuto();
-  });
-  repeatBtn.addEventListener('click', async () => {
-    await controller.repeat();
-  });
+  listenA.addEventListener('click', () => withAudio(() => controller.play('a')));
+  listenB.addEventListener('click', () => withAudio(() => controller.play('b')));
+  listenAuto.addEventListener('click', () => withAudio(() => controller.playAuto()));
+  repeatBtn.addEventListener('click', () => withAudio(() => controller.repeat()));
   stopBtn.addEventListener('click', () => controller.stop());
   viewA.addEventListener('click', () => controller.viewEpoch('a'));
   viewB.addEventListener('click', () => controller.viewEpoch('b'));
@@ -344,6 +383,18 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
   function renderMonths() {
     const l = lang();
     if (monthsLang === l) return;
+    if (dayInput.tagName === 'SELECT' && dayInput.options.length === 0) {
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '—';
+      dayInput.appendChild(blank);
+      for (let d = 1; d <= 31; d += 1) {
+        const opt = document.createElement('option');
+        opt.value = String(d);
+        opt.textContent = String(d);
+        dayInput.appendChild(opt);
+      }
+    }
     const previous = monthSelect.value;
     monthSelect.replaceChildren();
     const blank = document.createElement('option');
@@ -366,7 +417,17 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     const h = state.history;
     const result = h.status === 'ready' ? h.result : null;
     resultSection.hidden = !result;
-    if (!result) return;
+    if (!result) {
+      for (const el of [cardAValue, cardBValue]) setText(el, '—');
+      setText(cardAPeriod, t(l, 'momentBeforeTag', { first: 1950 }));
+      setText(cardBPeriod, t(l, 'momentAfterTag', { first: '…', last: '…' }));
+      setText($('moment-a-title'), t(l, 'momentBeforeTitle', { first: 1950 }));
+      setText($('moment-b-title'), t(l, 'momentAfterTitle', { first: '…', last: '…' }));
+      setText(cardDelta, '');
+      listenA.disabled = true;
+      listenB.disabled = true;
+      return;
+    }
 
     const { a, b } = result;
     const story = Boolean(result.story);
@@ -396,14 +457,18 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
 
     // Tarjetas Antes/Despues: solo presentacion visual de los mismos valores
     // del resumen (aria-hidden en index.html: no se anuncian dos veces).
-    const baselineText = String(result.baseline ?? '').replace('-', '–');
-    setText(cardAPeriod, periodA);
-    setText(cardBPeriod, periodB);
+    setText(cardAPeriod, story ? t(l, 'momentBeforeTag', { first: a.firstYear }) : periodA);
+    setText(cardBPeriod, story ? t(l, 'momentAfterTag', { first: b.firstYear, last: b.lastYear }) : periodB);
     setText(cardAValue, deg(a.value));
     setText(cardBValue, deg(b.value));
+    setText($('moment-a-title'), story ? t(l, 'momentBeforeTitle', { first: a.firstYear }) : periodA);
+    setText($('moment-b-title'), story ? t(l, 'momentAfterTitle', { first: b.firstYear, last: b.lastYear }) : periodB);
+    setText($('m-b-text'), t(l, result.delta !== null && result.delta < 0 ? 'momentAfterTextCool' : 'momentAfterText'));
     setText(
       cardDelta,
-      `${t(l, 'historyCardDelta', { delta: result.delta === null ? t(l, 'historySummaryNoDelta') : deg(result.delta) })} · ${t(l, 'historyCardBaseline', { baseline: baselineText })}`
+      result.delta === null
+        ? ''
+        : t(l, result.delta >= 0 ? 'momentDeltaWarmer' : 'momentDeltaCooler', { d: deg(Math.abs(result.delta)).replace('+', '') })
     );
 
     const storyLines = story ? buildBirthdayStory(result, l) : buildStory(result, l, { latestPeriod: lastPeriod });
@@ -458,15 +523,14 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       }
     }
 
-    setText(listenA, t(l, 'auroraListen'));
-    setText(listenB, t(l, 'auroraListen'));
     listenA.setAttribute('aria-label', t(l, 'historyListenA', { period: periodA }));
     listenB.setAttribute('aria-label', t(l, 'historyListenB', { period: periodB }));
     setText(listenAuto, t(l, 'historyListenAuto'));
     setText(repeatBtn, t(l, 'historyRepeat'));
     setText(stopBtn, t(l, 'historyStop'));
 
-    const soundOk = state.audio.started && !state.audio.muted;
+    // El primer clic activa el audio (ensureAudio): solo el silencio global bloquea.
+    const soundOk = !state.audio.muted;
     listenA.disabled = !soundOk || a.value === null;
     listenB.disabled = !soundOk || b.value === null;
     listenAuto.disabled = !soundOk || a.value === null || b.value === null;
@@ -476,8 +540,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     voiceBox.checked = h.voice;
 
     let hint = '';
-    if (!state.audio.started) hint = t(l, 'historyAudioOff');
-    else if (state.audio.muted) hint = t(l, 'historyMuted');
+    if (state.audio.muted) hint = t(l, 'historyMuted');
     else if (a.value === null || b.value === null) hint = t(l, 'historyNoDataListen');
     else if (!speechOk) hint = t(l, 'historySpeechUnsupported');
     setText(audioHint, hint);
@@ -486,7 +549,10 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (h.playError) status = t(l, h.playError === 'epoch' ? 'historyEpochError' : 'historyStartError');
     else if (h.playing?.phase === 'loading') status = t(l, 'historyPlayingLoading');
     else if (h.playing?.phase === 'gap') status = t(l, 'historyPlayingGap');
-    else if (h.playing) {
+    else if (h.playing && h.lastPlay === 'mix') status = t(l, 'mixPlaying');
+    else if (h.playing && String(h.lastPlay).startsWith('layer:')) {
+      status = t(l, 'layerPlaying', { layer: t(l, `layerName_${h.lastPlay.slice(6)}`) });
+    } else if (h.playing) {
       const announce = story ? storyAnnouncement(result, h.playing.epoch, l) : epochAnnouncement(result, h.playing.epoch, l);
       status = t(l, 'historyPlayingNow', { announce });
     } else if (h.ended) status = t(l, story ? 'storyEnded' : 'historyEnded');

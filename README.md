@@ -1,4 +1,6 @@
-# Earth Jukebox
+# Misti Sound (Earth Jukebox)
+
+> Interfaz final: 2 pestañas (Tu Fecha / Guía Docente), 3 capas de datos NASA (CO₂ = estrellas, ozono = viento, temperatura = latido), A+, atajos de teclado y compartir en Instagram/TikTok. Ver `docs/misti-sound-interfaz.md`.
 
 Proyecto para NASA Space Apps 2026. Visualizacion 3D (CesiumJS) y
 sonificacion (Tone.js) de datos climaticos terrestres, sin backend.

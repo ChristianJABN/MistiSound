@@ -25,6 +25,8 @@ import { createHistoryController } from './history/history-controller.js';
 import { loadCityCatalog } from './history/cities.js';
 import { DjMixer } from './audio/mixer.js';
 import { StoryPlayer } from './history/story-player.js';
+import { createMistiUi } from './ui/misti-ui.js';
+import { createLayersLoader } from './layers/layers-loader.js';
 import { imageryForEpoch, createDatedImageryLayer } from './globe/dated-imagery.js';
 import { createTabs } from './ui/tabs.js';
 import { createShare, resolvePresetPeriod, ALLOWED_DJ_CHANNELS } from './sharing/preset.js';
@@ -79,6 +81,9 @@ function clearDatedImagery({ keepState = false } = {}) {
 function applyStaticTexts() {
   for (const el of document.querySelectorAll('[data-i18n]')) {
     el.textContent = t(store.get().lang, el.getAttribute('data-i18n'));
+  }
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) {
+    el.setAttribute('aria-label', t(store.get().lang, el.getAttribute('data-i18n-aria')));
   }
 }
 
@@ -488,7 +493,23 @@ async function init() {
     repository: historyRepository,
     loadCities: () => loadCityCatalog({ baseUrl: DATA_BASE_URL }),
     getGlobePoint: () => store.get().selectedPoint,
-    narrator
+    narrator,
+    audioEngine
+  });
+  // Misti Sound: capas CO2/ozono, A+, guia docente, atajos y compartir.
+  const layersLoader = createLayersLoader({ store, baseUrl: import.meta.env.BASE_URL });
+  const mistiUi = createMistiUi({
+    store,
+    audioEngine,
+    controller: historyController,
+    onLayoutChange: () => {
+      const viewer = globeHandle?.viewer;
+      if (!viewer) return;
+      requestAnimationFrame(() => {
+        viewer.resize();
+        viewer.scene.requestRender();
+      });
+    }
   });
   applyStaticTexts();
 
@@ -713,6 +734,8 @@ async function init() {
     jukeboxPanel.render(state);
     historyPanel.render(state);
     historyController.enforce(state);
+    layersLoader.sync(state);
+    mistiUi.render(state);
     if (datedImageryLayer && (state.activeTab !== 'history' || state.history.status !== 'ready')) clearDatedImagery();
     share.render(state);
     aurora.render(state);
@@ -728,6 +751,7 @@ async function init() {
   eicPanel.render(store.get());
   jukeboxPanel.render(store.get());
   historyPanel.render(store.get());
+  mistiUi.render(store.get());
   share.render(store.get());
 
   await share.applyFromUrlIfPresent();

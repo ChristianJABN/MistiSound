@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#071c19" />
-    <meta name="description" content="Explora la Tierra y escucha su historia climática. Una experiencia visual y musical con datos de NASA y NOAA." />
+    <meta name="description" content="Misti Sound: elige un lugar y tu cumpleaños y escucha cómo cambió el clima de tu fecha desde 1950, con datos de NASA. Inclusivo y para el aula." />
     <link rel="icon" type="image/svg+xml" href="/aurora-mark.svg" />
-    <title>Earth Jukebox · El sonido de nuestro planeta</title>
+    <title>Misti Sound · El sonido de tu fecha en la Tierra</title>
   </head>
   <body>
     <a id="skip-link" href="#app-main" data-i18n="skipToContent">Saltar al contenido principal</a>
@@ -25,14 +25,10 @@
           <h1 data-i18n="title">Earth Jukebox</h1>
         </div>
         <nav id="section-tabs" aria-label="Secciones / Sections">
-          <button type="button" class="tab-btn" data-tab="history" aria-pressed="true" data-i18n="tabHistory"></button>
-          <button type="button" class="tab-btn" data-tab="explore" aria-pressed="false" data-i18n="tabExplore"></button>
-          <button type="button" class="tab-btn" data-tab="peru" aria-pressed="false" data-i18n="tabPeru"></button>
-          <button type="button" class="tab-btn" data-tab="accessible" aria-pressed="false" data-i18n="tabAccessible"></button>
-          <button type="button" class="tab-btn" data-tab="dj" aria-pressed="false" data-i18n="tabDj"></button>
-          <button type="button" class="tab-btn" data-tab="jukebox" aria-pressed="false" data-i18n="tabJukebox"></button>
+          <button type="button" class="tab-btn" data-tab="history" aria-pressed="true" data-i18n="tabYourDate"></button>
+          <button type="button" id="guide-open" class="nav-btn" aria-haspopup="dialog" aria-pressed="false" data-i18n="tabGuide"></button>
         </nav>
-        <div class="header-tools"><button type="button" id="effects-toggle" class="effects-toggle" aria-pressed="true"><span aria-hidden="true">✧</span><span data-i18n="auroraEffects"></span></button>
+        <div class="header-tools"><button type="button" id="aplus-toggle" class="aplus-btn" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="9" cy="7" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M17 8a4 4 0 0 1 0 6M19.5 5.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span aria-hidden="true">A+</span><span class="sr-only" data-i18n="aplusLabel"></span></button><button type="button" id="effects-toggle" class="effects-toggle" aria-pressed="true"><span aria-hidden="true">✧</span><span data-i18n="auroraEffects"></span></button>
         <div id="lang-switch" role="group" aria-label="Idioma / Language">
           <button type="button" data-lang="es" class="lang-btn" aria-pressed="false">ES</button>
           <button type="button" data-lang="en" class="lang-btn" aria-pressed="false">EN</button>
@@ -46,25 +42,6 @@
         <p id="experience-subtitle" data-i18n="auroraIntro"></p>
       </section>
       <main id="app-main">
-        <section id="globe-section" aria-label="Globo 3D">
-          <div class="globe-aura" aria-hidden="true"></div>
-          <canvas id="orbit-waves" aria-hidden="true"></canvas>
-          <div id="globe-container"></div>
-          <div id="globe-label" class="globe-label" hidden><span class="location-pulse" aria-hidden="true"></span><span id="globe-place-name"></span></div>
-          <div class="globe-tools">
-            <div class="globe-view-switch" role="group" aria-label="Vista del planeta / Globe view">
-              <button id="view-natural" type="button" aria-pressed="true" data-i18n="auroraNatural"></button>
-              <button id="view-anomaly" type="button" aria-pressed="false" data-i18n="auroraAnomalies"></button>
-            </div>
-            <p class="globe-hint" data-i18n="auroraGlobeHint"></p>
-          </div>
-          <div id="globe-fallback" hidden>
-            <p data-i18n="globeErrorWebgl"></p>
-          </div>
-          <div id="gibs-warning" hidden role="status">
-            <p data-i18n="gibsError"></p>
-          </div>
-        </section>
 
         <aside id="side-panel" aria-label="Panel de informacion y controles">
           <div id="history-panel" aria-label="Historia">
@@ -75,27 +52,28 @@
                 <label for="history-place-q" data-i18n="historyPlaceLabel"></label>
                 <div class="inline-row">
                   <input type="search" id="history-place-q" placeholder="Iquitos, Lima, Madrid…" autocomplete="off" aria-describedby="history-place-help" />
-                  <button type="button" id="history-place-search" class="action-btn" data-i18n="historySearchBtn"></button>
+                  <button type="button" id="history-place-search" class="sr-only" data-i18n="historySearchBtn"></button>
+                  <button type="button" id="history-locate" class="icon-square" data-i18n-aria="locateLabel"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
                 </div>
 <details class="field-disclosure"><summary data-i18n="auroraPlaceHelp"></summary>                <p id="history-place-help" class="field-help" data-i18n="historyPlaceHelp"></p><p id="history-birth-note" class="field-help"></p>
                 <p class="field-help"><span data-i18n="historyCredit"></span> <a href="https://www.geonames.org/" target="_blank" rel="noopener">GeoNames</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></p></details>
               </div>
               <p id="history-place-status" role="status"></p>
               <ul id="history-place-results" class="choice-list"></ul>
-              <button type="button" id="history-use-globe" class="secondary-btn" data-i18n="historyUseGlobe"></button>
+              <button type="button" id="history-use-globe" class="secondary-btn" hidden data-i18n="historyUseGlobe"></button>
               <p id="history-place-chosen"></p>
               </div>
               <div class="history-when-group">
-                <div class="when-pair when-trio">
+                <div class="when-pair when-stack">
                   <div class="form-row">
                     <label for="history-day" data-i18n="storyDayLabel"></label>
-                    <input type="text" id="history-day" placeholder="14" inputmode="numeric" maxlength="2" autocomplete="off" aria-describedby="history-form-error" />
+                    <select id="history-day" aria-describedby="history-form-error"></select>
                   </div>
                   <div class="form-row">
                     <label for="history-month" data-i18n="storyMonthLabel"></label>
                     <select id="history-month"></select>
                   </div>
-                  <div class="form-row">
+                  <div class="form-row" hidden>
                     <label for="history-year" data-i18n="storyYearLabel"></label>
                     <input type="text" id="history-year" placeholder="1990" inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="history-birth-note history-form-error" />
                   </div>
@@ -104,9 +82,23 @@
                 <button type="submit" id="history-submit" class="action-btn" data-i18n="historySubmit"></button>
               </div>
             </form>
-            <button type="button" id="history-demo" class="demo-btn"><span aria-hidden="true">↗</span><span data-i18n="auroraDemo"></span></button>
+            <button type="button" id="history-demo" class="demo-btn"><span aria-hidden="true">✓</span><span data-i18n="auroraDemo"></span></button>
             <p id="history-latest-note" class="field-help"></p>
             <p id="history-load-status" role="status"></p>
+            <div class="shortcuts-wrap">
+              <div id="shortcuts-pop" class="shortcuts-pop" role="dialog" aria-labelledby="shortcuts-title" hidden>
+                <h3 id="shortcuts-title" class="sr-only" data-i18n="shortcutsTitle"></h3>
+                <dl>
+                  <div><dt><kbd data-i18n="keySpace"></kbd></dt><dd data-i18n="shortcutSpace"></dd></div>
+                  <div><dt><kbd>1</kbd></dt><dd data-i18n="shortcut1"></dd></div>
+                  <div><dt><kbd>2</kbd></dt><dd data-i18n="shortcut2"></dd></div>
+                  <div><dt><kbd>3</kbd></dt><dd data-i18n="shortcut3"></dd></div>
+                  <div><dt><kbd>M</kbd></dt><dd data-i18n="shortcutM"></dd></div>
+                  <div><dt><kbd>Esc</kbd></dt><dd data-i18n="shortcutEsc"></dd></div>
+                </dl>
+              </div>
+              <button type="button" id="shortcuts-btn" class="link-btn" aria-expanded="false" aria-controls="shortcuts-pop"><span aria-hidden="true">⌨</span> <span data-i18n="shortcutsBtn"></span></button>
+            </div>
 
 
           </div>
@@ -224,84 +216,126 @@
 
 
         </aside>
-        <aside id="history-stage" aria-label="Comparación de tu historia / Your story comparison">
-          <div id="history-empty">
-            <div class="panel-heading result-heading"><span class="step-badge violet-badge" aria-hidden="true">02</span><div><p class="eyebrow" data-i18n="auroraTwoMoments"></p><h3 data-i18n="auroraListenChange"></h3></div></div>
-            <article class="compare-card compare-before empty-card"><p class="compare-caption" data-i18n="historyCardBefore"></p><p class="compare-period" data-i18n="auroraBeforeEmpty"></p><p class="compare-value">— <span>°C</span></p><div class="card-listen"><span class="empty-listen" aria-hidden="true">▷</span><div class="mini-wave" aria-hidden="true"><i style="--i:0;--h:4px"></i><i style="--i:1;--h:8px"></i><i style="--i:2;--h:13px"></i><i style="--i:3;--h:19px"></i><i style="--i:4;--h:11px"></i><i style="--i:5;--h:25px"></i><i style="--i:6;--h:34px"></i><i style="--i:7;--h:19px"></i><i style="--i:8;--h:29px"></i><i style="--i:9;--h:40px"></i><i style="--i:10;--h:23px"></i><i style="--i:11;--h:31px"></i><i style="--i:12;--h:16px"></i><i style="--i:13;--h:25px"></i><i style="--i:14;--h:12px"></i><i style="--i:15;--h:19px"></i><i style="--i:16;--h:9px"></i><i style="--i:17;--h:6px"></i><i style="--i:18;--h:3px"></i></div></div></article>
-            <article class="compare-card compare-after empty-card"><p class="compare-caption" data-i18n="historyCardAfter"></p><p class="compare-period" data-i18n="auroraAfterEmpty"></p><p class="compare-value">— <span>°C</span></p><div class="card-listen"><span class="empty-listen" aria-hidden="true">▷</span><div class="mini-wave" aria-hidden="true"><i style="--i:0;--h:4px"></i><i style="--i:1;--h:8px"></i><i style="--i:2;--h:13px"></i><i style="--i:3;--h:19px"></i><i style="--i:4;--h:11px"></i><i style="--i:5;--h:25px"></i><i style="--i:6;--h:34px"></i><i style="--i:7;--h:19px"></i><i style="--i:8;--h:29px"></i><i style="--i:9;--h:40px"></i><i style="--i:10;--h:23px"></i><i style="--i:11;--h:31px"></i><i style="--i:12;--h:16px"></i><i style="--i:13;--h:25px"></i><i style="--i:14;--h:12px"></i><i style="--i:15;--h:19px"></i><i style="--i:16;--h:9px"></i><i style="--i:17;--h:6px"></i><i style="--i:18;--h:3px"></i></div></div></article>
-            <p class="empty-note" data-i18n="auroraEmptyNote"></p>
-          </div>
-            <section id="history-result" hidden aria-label="Resultado">
-              <h3 id="history-result-title" tabindex="-1"></h3>
-              <p id="history-summary" class="sr-only"></p>
-              <div id="history-compare">
-                <article class="compare-card compare-before">
-                  <p class="compare-caption" aria-hidden="true" data-i18n="historyCardBefore"></p>
-                  <p class="compare-period" id="history-card-a-period" aria-hidden="true"></p>
-                  <p class="compare-value" id="history-card-a-value" aria-hidden="true"></p>
-                  <div class="card-listen"><button type="button" id="history-listen-a" class="listen-button"></button><div class="mini-wave" aria-hidden="true"><i style="--i:0;--h:4px"></i><i style="--i:1;--h:8px"></i><i style="--i:2;--h:13px"></i><i style="--i:3;--h:19px"></i><i style="--i:4;--h:11px"></i><i style="--i:5;--h:25px"></i><i style="--i:6;--h:34px"></i><i style="--i:7;--h:19px"></i><i style="--i:8;--h:29px"></i><i style="--i:9;--h:40px"></i><i style="--i:10;--h:23px"></i><i style="--i:11;--h:31px"></i><i style="--i:12;--h:16px"></i><i style="--i:13;--h:25px"></i><i style="--i:14;--h:12px"></i><i style="--i:15;--h:19px"></i><i style="--i:16;--h:9px"></i><i style="--i:17;--h:6px"></i><i style="--i:18;--h:3px"></i></div></div>
-                </article>
-                <article class="compare-card compare-after">
-                  <p class="compare-caption" aria-hidden="true" data-i18n="historyCardAfter"></p>
-                  <p class="compare-period" id="history-card-b-period" aria-hidden="true"></p>
-                  <p class="compare-value" id="history-card-b-value" aria-hidden="true"></p>
-                  <div class="card-listen"><button type="button" id="history-listen-b" class="listen-button"></button><div class="mini-wave" aria-hidden="true"><i style="--i:0;--h:4px"></i><i style="--i:1;--h:8px"></i><i style="--i:2;--h:13px"></i><i style="--i:3;--h:19px"></i><i style="--i:4;--h:11px"></i><i style="--i:5;--h:25px"></i><i style="--i:6;--h:34px"></i><i style="--i:7;--h:19px"></i><i style="--i:8;--h:29px"></i><i style="--i:9;--h:40px"></i><i style="--i:10;--h:23px"></i><i style="--i:11;--h:31px"></i><i style="--i:12;--h:16px"></i><i style="--i:13;--h:25px"></i><i style="--i:14;--h:12px"></i><i style="--i:15;--h:19px"></i><i style="--i:16;--h:9px"></i><i style="--i:17;--h:6px"></i><i style="--i:18;--h:3px"></i></div></div>
-                </article>
-                <p class="compare-delta" id="history-card-delta" aria-hidden="true"></p>
+        <section id="layers-column" aria-labelledby="layers-title">
+          <h2 id="layers-title" class="sr-only" data-i18n="layersTitle"></h2>
+          <article class="layer-card layer-co2" aria-labelledby="layer-co2-title">
+            <div class="layer-media"><img src="/images/layers/co2-dyamond.jpg" alt="" width="1024" height="576" decoding="async" /></div>
+            <div class="layer-top"><h3 id="layer-co2-title" data-i18n="layerCo2Title"></h3><button type="button" class="layer-listen" data-layer="co2" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+            <p class="layer-legend"><span aria-hidden="true">✦</span> <span data-i18n="layerCo2Legend"></span></p>
+          </article>
+          <p class="layer-divider" aria-hidden="true"><span>〰</span> <span data-i18n="layersTogether"></span></p>
+          <article class="layer-card layer-ozone" aria-labelledby="layer-oz-title">
+            <div class="layer-media"><canvas id="ozone-canvas" width="1024" height="512" role="img" aria-label=""></canvas></div>
+            <div class="layer-top"><h3 id="layer-oz-title" data-i18n="layerOzoneTitle"></h3><button type="button" class="layer-listen" data-layer="ozone" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+            <p class="layer-legend"><span aria-hidden="true">〰</span> <span data-i18n="layerOzoneLegend"></span></p>
+          </article>
+          <p class="layer-divider" aria-hidden="true"><span>〰</span> <span data-i18n="layersTogether"></span></p>
+          <article class="layer-card layer-temp" aria-labelledby="layer-temp-title">
+            <div class="layer-media layer-globe">
+            <section id="globe-section" aria-label="Globo 3D">
+              <div class="globe-aura" aria-hidden="true"></div>
+              <canvas id="orbit-waves" aria-hidden="true"></canvas>
+              <div id="globe-container"></div>
+              <div id="globe-label" class="globe-label" hidden><span class="location-pulse" aria-hidden="true"></span><span id="globe-place-name"></span></div>
+              <div class="globe-tools">
+                <div class="globe-view-switch" role="group" aria-label="Vista del planeta / Globe view">
+                  <button id="view-natural" type="button" aria-pressed="true" data-i18n="auroraNatural"></button>
+                  <button id="view-anomaly" type="button" aria-pressed="false" data-i18n="auroraAnomalies"></button>
+                </div>
+                <p class="globe-hint" data-i18n="auroraGlobeHint"></p>
               </div>
+              <div id="globe-fallback" hidden>
+                <p data-i18n="globeErrorWebgl"></p>
+              </div>
+              <div id="gibs-warning" hidden role="status">
+                <p data-i18n="gibsError"></p>
+              </div>
+            </section>
+            </div>
+            <div class="layer-top"><h3 id="layer-temp-title" data-i18n="layerTempTitle"></h3><button type="button" class="layer-listen" data-layer="temp" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+            <p class="layer-legend"><span aria-hidden="true">♥</span> <span data-i18n="layerTempLegend"></span></p>
+          </article>
+        </section>
+
+        <aside id="history-stage" aria-labelledby="stage-title">
+          <div class="panel-heading result-heading"><span class="step-badge violet-badge" aria-hidden="true">02</span><div><p class="eyebrow" data-i18n="auroraTwoMoments"></p><h2 id="stage-title" class="stage-title" data-i18n="auroraListenChange"></h2></div></div>
+          <h3 id="history-result-title" class="sr-only" tabindex="-1"></h3>
+          <p id="history-summary" class="sr-only"></p>
+          <div id="history-compare">
+            <article class="moment moment-before compare-before" aria-labelledby="moment-a-title">
+              <span class="moment-key" aria-hidden="true">[1]</span>
+              <p class="moment-tag" id="history-card-a-period"></p>
+              <h3 id="moment-a-title" data-i18n="momentBeforeTitle"></h3>
+              <dl class="metrics">
+                <div><dt data-i18n="metricTemp"></dt><dd id="history-card-a-value">—</dd></div>
+                <div><dt data-i18n="metricCo2"></dt><dd id="m-a-co2">—</dd></div>
+                <div><dt data-i18n="metricOzone"></dt><dd id="m-a-oz">—</dd></div>
+              </dl>
+              <div class="moment-play"><button type="button" id="history-listen-a" class="play-round" disabled><span aria-hidden="true">▶</span></button><p id="m-a-text" data-i18n="momentBeforeText"></p></div>
+            </article>
+            <article class="moment moment-after compare-after" aria-labelledby="moment-b-title">
+              <span class="moment-key" aria-hidden="true">[2]</span>
+              <p class="moment-tag" id="history-card-b-period"></p>
+              <div class="moment-head"><h3 id="moment-b-title" data-i18n="momentAfterTitle"></h3><p id="history-card-delta" class="moment-delta"></p></div>
+              <dl class="metrics">
+                <div><dt data-i18n="metricTemp"></dt><dd id="history-card-b-value">—</dd></div>
+                <div><dt data-i18n="metricCo2"></dt><dd id="m-b-co2">—</dd></div>
+                <div><dt data-i18n="metricOzone"></dt><dd id="m-b-oz">—</dd></div>
+              </dl>
+              <div class="moment-play"><button type="button" id="history-listen-b" class="play-round" disabled><span aria-hidden="true">▶</span></button><p id="m-b-text" data-i18n="momentAfterText"></p></div>
+            </article>
+            <p id="metrics-note" class="field-help"></p>
+            <button type="button" id="history-mix" class="mix-btn" disabled><span class="moment-key" aria-hidden="true">[3]</span><span data-i18n="mixBtn"></span></button>
+            <div class="share-row">
+              <button type="button" id="share-instagram" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span data-i18n="shareInstagram"></span></button>
+              <button type="button" id="share-tiktok" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.1c-1.5 0-2.8-.4-4-1.2V15a6 6 0 1 1-6-6v3.2a2.8 2.8 0 1 0 2.8 2.8V3h3.2z"/></svg><span data-i18n="shareTiktok"></span></button>
+            </div>
+            <p id="history-card-status" role="status"></p>
+          </div>
+          <section id="history-result" hidden aria-label="Resultado">
+            <ol id="history-years" class="year-beats" aria-label=""></ol>
+            <p id="history-play-status" role="status"></p>
+            <p id="history-audio-hint"></p>
+            <div id="history-actions" class="button-row">
+              <button type="button" id="history-listen-auto" class="secondary-btn"></button>
+              <button type="button" id="history-stop" class="secondary-btn"></button>
+            </div>
+            <details class="listening-options"><summary data-i18n="auroraListeningOptions"></summary>
               <div id="history-view" role="group" aria-labelledby="history-view-label">
                 <p id="history-view-label" class="eyebrow" data-i18n="storyViewLabel"></p>
                 <button type="button" id="history-view-a" class="secondary-btn" aria-pressed="false"></button>
                 <button type="button" id="history-view-b" class="secondary-btn" aria-pressed="false"></button>
                 <p id="history-imagery" class="field-help"></p>
               </div>
-              <ol id="history-years" class="year-beats" aria-label=""></ol>
-              <p id="history-short-note" class="field-help" data-i18n="historyShortNote"></p>
-              <div id="history-actions" class="button-row">
-                <button type="button" id="history-listen-auto" class="secondary-btn"></button>
-                <button type="button" id="history-stop" class="secondary-btn"></button>
-              </div>
-              <details class="listening-options"><summary data-i18n="auroraListeningOptions"></summary>
-                <button type="button" id="history-repeat" class="secondary-btn"></button>
+              <button type="button" id="history-repeat" class="secondary-btn"></button>
               <div class="form-row check-row">
                 <input type="checkbox" id="history-voice" />
                 <label for="history-voice" data-i18n="historyVoiceLabel"></label>
               </div>
               <button type="button" id="history-speak" class="secondary-btn" data-i18n="historySpeak"></button>
+              <p id="history-short-note" class="field-help" data-i18n="historyShortNote"></p>
               <details id="history-details">
                 <summary data-i18n="historyDetailsSummary"></summary>
                 <div id="history-story"></div>
                 <dl id="history-data"></dl>
-                <section id="history-learn" aria-label="Educación">
-                  <h3 data-i18n="historyLearnTitle"></h3>
-                  <p data-i18n="historyHowTo"></p>
-                  <p data-i18n="historyVariability"></p>
-                  <ul>
-                    <li data-i18n="historyQuestion1"></li>
-                    <li data-i18n="historyQuestion2"></li>
-                  </ul>
-                  <p id="history-missing"></p>
-                </section>
+                <p id="history-missing"></p>
                 <button type="button" id="history-clear" class="secondary-btn" data-i18n="historyClear"></button>
                 <p class="field-help" data-i18n="historyPrivacy"></p>
               </details>
+            </details>
+            <button type="button" id="history-show-reflection" class="demo-btn" data-i18n="storyShowReflection"></button>
+            <section id="history-reflection" hidden aria-labelledby="history-reflection-title">
+              <h3 id="history-reflection-title" tabindex="-1" data-i18n="storyReflectTitle"></h3>
+              <p id="history-reflection-text"></p>
+              <div class="button-row">
+                <button type="button" id="history-card-share" class="action-btn" data-i18n="storyShareCard"></button>
+                <button type="button" id="history-card-download" class="secondary-btn" data-i18n="storyDownloadCard"></button>
+              </div>
+              <details class="listening-options"><summary data-i18n="storyClassTitle"></summary>
+                <ul id="history-class-questions"></ul>
               </details>
-              <p id="history-play-status" role="status"></p>
-              <p id="history-audio-hint"></p>
-              <button type="button" id="history-show-reflection" class="demo-btn" data-i18n="storyShowReflection"></button>
-              <section id="history-reflection" hidden aria-labelledby="history-reflection-title">
-                <h3 id="history-reflection-title" tabindex="-1" data-i18n="storyReflectTitle"></h3>
-                <p id="history-reflection-text"></p>
-                <div class="button-row">
-                  <button type="button" id="history-card-share" class="action-btn" data-i18n="storyShareCard"></button>
-                  <button type="button" id="history-card-download" class="secondary-btn" data-i18n="storyDownloadCard"></button>
-                </div>
-                <p id="history-card-status" role="status"></p>
-                <details class="listening-options"><summary data-i18n="storyClassTitle"></summary>
-                  <ul id="history-class-questions"></ul>
-                </details>
-              </section>
             </section>
+          </section>
         </aside>
       </main>
       <div id="support-row"><p class="data-credit"><span class="signal-dot" aria-hidden="true"></span><span data-i18n="auroraDataCredit"></span></p><details id="share-drawer" class="support-drawer"><summary><span aria-hidden="true">↗</span> <span data-i18n="auroraShare"></span></summary>          <section id="share-section" aria-label="Compartir">
@@ -342,6 +376,30 @@
         <span id="period-status" aria-live="polite"></span>
       </footer></div>
     </div>
+    <dialog id="guide-dialog" aria-labelledby="guide-title">
+      <div class="guide-body">
+        <h2 id="guide-title" data-i18n="guideTitle"></h2>
+        <div class="guide-two">
+          <section><h3 data-i18n="guideGoalTitle"></h3><p data-i18n="guideGoal"></p></section>
+          <section><h3 data-i18n="guideFlowTitle"></h3><ol><li data-i18n="guideFlow1"></li><li data-i18n="guideFlow2"></li><li data-i18n="guideFlow3"></li></ol></section>
+        </div>
+        <h3 data-i18n="guideLayersTitle"></h3>
+        <div class="guide-cards">
+          <article><h4><span aria-hidden="true">✦</span> <span data-i18n="guideCo2Name"></span></h4><p><strong data-i18n="guideWhat"></strong> <span data-i18n="guideCo2What"></span></p><p><strong data-i18n="guideEffect"></strong> <span data-i18n="guideCo2Effect"></span></p></article>
+          <article><h4><span aria-hidden="true">〰</span> <span data-i18n="guideOzoneName"></span></h4><p><strong data-i18n="guideWhat"></strong> <span data-i18n="guideOzoneWhat"></span></p><p><strong data-i18n="guideEffect"></strong> <span data-i18n="guideOzoneEffect"></span></p></article>
+          <article><h4><span aria-hidden="true">♥</span> <span data-i18n="guideTempName"></span></h4><p><strong data-i18n="guideWhat"></strong> <span data-i18n="guideTempWhat"></span></p><p><strong data-i18n="guideEffect"></strong> <span data-i18n="guideTempEffect"></span></p></article>
+        </div>
+        <h3 data-i18n="guideQuestionsTitle"></h3>
+        <ul class="guide-questions"><li data-i18n="guideQ1"></li><li data-i18n="guideQ2"></li><li data-i18n="guideQ3"></li></ul>
+        <p class="guide-sources" data-i18n="guideSources"></p>
+        <div class="guide-actions">
+          <button type="button" id="guide-pdf" class="guide-btn" data-i18n="guidePdf"></button>
+          <button type="button" id="guide-copy" class="guide-btn" data-i18n="guideCopy"></button>
+          <button type="button" id="guide-close" class="guide-btn guide-btn-solid" data-i18n="guideClose"></button>
+        </div>
+        <p id="guide-status" role="status"></p>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

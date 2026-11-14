@@ -91,7 +91,7 @@ export function createHistoryController({
     patch({ playing: null, ended: false, ...extra });
   }
 
-  async function beginEpoch(which, auto, kind) {
+  async function beginEpoch(which, auto, kind, { mode = null, layer = null } = {}) {
     const s0 = store.get();
     const blocked = canSound(s0);
     if (blocked) return { ok: false, reason: blocked };
@@ -128,9 +128,10 @@ export function createHistoryController({
       m.updateData({ temperature: epoch.value, rain: null, ice: null });
       // Reproductor del relato (Misti Sound): pasado lento y estable, presente
       // con un latido por anio que se acelera. Opcional: el mezclador clasico no lo tiene.
-      m.setStoryEpoch?.({ which, epoch, pastValue: s.history.result.a.value });
+      m.setStoryEpoch?.({ which, epoch, pastValue: s.history.result.a.value, result: s.history.result, layers: s.history.layers?.data ?? null, mode, layer });
+      m.setMusicMuted?.(Boolean(s.history.musicMuted));
       patch({ playing: { epoch: which, auto, phase: 'music' } });
-      if (s.history.voice) {
+      if (s.history.voice && !mode) {
         narrator?.speak(announce(s.history.result, which, s.lang), s.lang, { rate: which === 'a' ? 0.88 : 1.05 });
       }
       m.start({ mode: 'composition', onEnd: () => handleEnd(which, auto, token) });
@@ -166,6 +167,27 @@ export function createHistoryController({
     return beginEpoch(which, false, which);
   }
 
+  /** [3] Mezclar ambos tiempos: antes (izquierda) y ahora (derecha) a la vez. */
+  async function playMix() {
+    const result = store.get().history.result;
+    if (!result?.story) return { ok: false, reason: 'noResult' };
+    return beginEpoch('b', false, 'mix', { mode: 'mix' });
+  }
+
+  /** "Oir sonido" de una tarjeta: solo esa capa, antes y luego ahora. */
+  async function playLayer(layer) {
+    const result = store.get().history.result;
+    if (!result?.story) return { ok: false, reason: 'noResult' };
+    if (!['co2', 'ozone', 'temp'].includes(layer)) return { ok: false, reason: 'invalid' };
+    return beginEpoch('b', false, `layer:${layer}`, { mode: 'solo', layer });
+  }
+
+  /** Tecla M: silencia la musica pero deja la voz. */
+  function setMusicMuted(muted) {
+    patch({ musicMuted: Boolean(muted) });
+    mixer?.setMusicMuted?.(Boolean(muted));
+  }
+
   async function playAuto() {
     const result = store.get().history.result;
     if (!result) return { ok: false, reason: 'noResult' };
@@ -176,6 +198,8 @@ export function createHistoryController({
   async function repeat() {
     const last = store.get().history.lastPlay;
     if (last === 'auto') return playAuto();
+    if (last === 'mix') return playMix();
+    if (typeof last === 'string' && last.startsWith('layer:')) return playLayer(last.slice(6));
     if (last === 'a' || last === 'b') return play(last);
     return { ok: false, reason: 'nothing' };
   }
@@ -319,5 +343,5 @@ export function createHistoryController({
     if (h.playing && state.audio.muted) stop();
   }
 
-  return { submit, submitStory, viewEpoch, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce };
+  return { submit, submitStory, viewEpoch, playMix, playLayer, setMusicMuted, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce };
 }

@@ -1,7 +1,7 @@
 // Musica del relato de cumpleanos (Misti Sound). Modulo PURO: devuelve eventos
 // con tiempo relativo; story-player.js los toca con Tone.
 //
-// Paso 2 — La memoria del pasado (calma): 56 BPM, 3 compases. Arpegio lento de
+// Paso 2 — La memoria del pasado (calma): 56 BPM, 2 compases y un reposo. Arpegio lento de
 // negras sobre un acorde mayor sostenido; volumen suave y estable. La altura
 // sale de la anomalia de la decada de 1950.
 //
@@ -18,7 +18,7 @@ import { PENTATONIC_SCALE } from '../config/sonification.js';
 import { frameValueToNote } from '../eic/frame-sonification.js';
 
 export const PAST_BPM = 56;
-export const PAST_BARS = 3;
+export const PAST_BARS = 2;
 export const RECENT_BASE_BPM = 72;
 export const RECENT_BPM_PER_DEGREE = 20;
 export const RECENT_MAX_BPM = 132;

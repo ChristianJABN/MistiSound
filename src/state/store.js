@@ -74,6 +74,8 @@ export function createHistoryState() {
     viewing: null, // 'a' | 'b': epoca que muestra el globo en el relato de cumpleanos
     imagery: null, // imagen satelital con fecha mostrada (src/globe/dated-imagery.js)
     beat: null, // compas del presente que esta sonando: { year, bpm, tension }
+    layers: null, // { status: 'loading'|'ready'|'error', data: { co2, ozone } } capas CO2/ozono
+    musicMuted: false, // tecla M: musica en silencio, la voz sigue
     voice: false // anuncio por voz de cada epoca: opt-in, desactivado por defecto
   };
 }

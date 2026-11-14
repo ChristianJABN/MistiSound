@@ -15,7 +15,8 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const listeners = new AbortController();
   const listen = (target, type, fn, opts = {}) => target.addEventListener(type, fn, { ...opts, signal: listeners.signal });
-  const viewModes = { history: false, explore: true, peru: false, accessible: true, dj: false };
+  // Misti Sound: la tarjeta Temperatura muestra los colores de anomalia por defecto.
+  const viewModes = { history: true, explore: true, peru: false, accessible: true, dj: false };
   const headings = {
     history: ['historyTitle', 'auroraIntro'], explore: ['auroraExploreTitle', 'auroraExploreIntro'],
     peru: ['auroraPeruTitle', 'auroraPeruIntro'], accessible: ['auroraAccessibleTitle', 'auroraAccessibleIntro'],
@@ -209,12 +210,14 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
     $('experience-title').textContent = t(lang, title);
     $('experience-subtitle').textContent = t(lang, intro);
     $('history-stage').hidden = activeTab !== 'history';
-    $('history-empty').hidden = history.status === 'ready';
+    const empty = $('history-empty');
+    if (empty) empty.hidden = history.status === 'ready';
     $('history-form').setAttribute('aria-busy', String(history.status === 'loading'));
     $('history-submit').disabled = history.status === 'loading';
-    for (const [selector, epoch] of [['.compare-before', 'a'], ['.compare-after', 'b']]) {
-      $('history-result').querySelector(selector)?.classList.toggle('is-playing',
-        Boolean(activeTab === 'history' && !audio.muted && history.playing?.epoch === epoch && history.playing?.phase === 'music'));
+    for (const [selector, epoch] of [['.moment-before', 'a'], ['.moment-after', 'b']]) {
+      const playingMix = history.lastPlay === 'mix' || String(history.lastPlay).startsWith('layer:');
+      document.querySelector(selector)?.classList.toggle('is-playing',
+        Boolean(activeTab === 'history' && !audio.muted && history.playing?.phase === 'music' && (playingMix || history.playing?.epoch === epoch)));
     }
     if (selectedPoint) {
       $('globe-label').hidden = false;
