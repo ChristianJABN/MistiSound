@@ -540,5 +540,8 @@
   "ariaPointInfo": "Selected point information",
   "ariaLegend": "Anomaly legend",
   "ariaCompare": "Compare A/B",
-  "ariaEicResources": "EIC resources"
+  "ariaEicResources": "EIC resources",
+  "lifeEyebrow": "Your story",
+  "lifeDataSummary": "See the data",
+  "lifeSaveMessage": "Save my message to the future"
 }

@@ -33,7 +33,11 @@ export function validateTtsRequest(body) {
 export async function synthesize({ text, lang, speed = 1 }, { apiKey, voices = VOICES, fetchImpl = fetch } = {}) {
   if (!apiKey) return { ok: false, status: 503, error: 'no_key' };
   const voiceId = (lang === 'es' ? process.env.ELEVENLABS_VOICE_ES : process.env.ELEVENLABS_VOICE_EN) || voices[lang];
-  const res = await fetchImpl(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_64`, {
+  // Un fallo de red (sin conexion, demora) NUNCA debe lanzar: se responde
+  // 504 y el navegador reintenta. Antes tumbaba el servidor de desarrollo.
+  let res;
+  try {
+    res = await fetchImpl(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_64`, {
     method: 'POST',
     headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
     body: JSON.stringify({
@@ -41,10 +45,14 @@ export async function synthesize({ text, lang, speed = 1 }, { apiKey, voices = V
       model_id: MODEL_ID,
       // Voz serena y estable, con algo de expresividad para que suene humana.
       voice_settings: { stability: 0.55, similarity_boost: 0.75, style: 0.25, use_speaker_boost: true, speed }
-    })
-  });
-  if (!res.ok) return { ok: false, status: res.status === 401 ? 502 : res.status, error: `elevenlabs_${res.status}` };
-  return { ok: true, audio: await res.arrayBuffer() };
+    }),
+    signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined
+    });
+    if (!res.ok) return { ok: false, status: res.status === 401 ? 502 : res.status, error: `elevenlabs_${res.status}` };
+    return { ok: true, audio: await res.arrayBuffer() };
+  } catch {
+    return { ok: false, status: 504, error: 'network' };
+  }
 }
 
 /** Cache en memoria (el mismo texto no se paga dos veces mientras viva la instancia). */

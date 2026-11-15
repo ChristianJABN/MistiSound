@@ -88,6 +88,11 @@ export function createExperiences({ store, audioEngine, controller }) {
   }
   $('exp-open')?.addEventListener('click', open);
   $('exp-open-inline')?.addEventListener('click', open);
+  // "Tu historia": el mensaje para quien nace hoy abre Experiencias ya escrito.
+  document.addEventListener('misti:open-experience', (e) => {
+    open();
+    if (e.detail?.comment) $('exp-comment').value = e.detail.comment;
+  });
   $('exp-close')?.addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => $('exp-open')?.setAttribute('aria-pressed', 'false'));
 

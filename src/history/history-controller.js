@@ -18,7 +18,7 @@ import {
   epochAnnouncement,
   buildStory
 } from './history-core.js';
-import { validateBirthday, loadStoryResult, storyAnnouncement, buildBirthdayStory, reflectionMessage, PAST_FIRST_YEAR } from './story-core.js';
+import { validateBirthday, loadStoryResult, storyAnnouncement, buildBirthdayStory, PAST_FIRST_YEAR } from './story-core.js';
 
 /** Texto de cada epoca: relato de cumpleanos (Misti Sound) o comparacion clasica. */
 function announce(result, which, lang) {
@@ -26,6 +26,9 @@ function announce(result, which, lang) {
 }
 
 export const EPOCH_GAP_MS = 1000;
+// Silencio antes del presente en el relato de cumpleanos ('Ahora escucha
+// como suena hoy'): el contraste se siente mas despues de una pausa.
+export const STORY_INTERLUDE_MS = 3500;
 
 export function createHistoryController({
   store,
@@ -37,10 +40,13 @@ export function createHistoryController({
   onShowEpoch,
   setTimeoutFn = (fn, ms) => setTimeout(fn, ms),
   clearTimeoutFn = (id) => clearTimeout(id),
-  gapMs = EPOCH_GAP_MS
+  gapMs = EPOCH_GAP_MS,
+  interludeMs = STORY_INTERLUDE_MS
 }) {
   const coordinator = createActionCoordinator();
   let playToken = 0;
+  // Momento que suena ahora (para adelantar el relato cuando termina la voz).
+  let musicCtx = null;
   let gapTimer = null;
   let mixer = null;
 
@@ -131,10 +137,12 @@ export function createHistoryController({
       m.setStoryEpoch?.({ which, epoch, pastValue: s.history.result.a.value, result: s.history.result, layers: s.history.layers?.data ?? null, mode, layer });
       m.setMusicMuted?.(Boolean(s.history.musicMuted));
       patch({ playing: { epoch: which, auto, phase: 'music' } });
-      if (s.history.voice && !mode) {
+      // En el relato de cumpleanos la voz la pone "Tu historia" (life-ui.js).
+      if (s.history.voice && !mode && !s.history.result?.story) {
         narrator?.speak(announce(s.history.result, which, s.lang), s.lang, { rate: which === 'a' ? 0.88 : which === 'n' ? 0.92 : 0.97 });
       }
       m.start({ mode: 'composition', onEnd: () => handleEnd(which, auto, token) });
+      musicCtx = { which, auto, token, at: Date.now() };
     } catch (err) {
       console.error('No se pudo iniciar la escucha', err);
       silence();
@@ -144,8 +152,29 @@ export function createHistoryController({
     return { ok: true };
   }
 
+  /**
+   * Relato automatico: cuando el relator termina, no esperar a que acabe la
+   * musica. La pieza se apaga suave y pasa al siguiente momento, pero cada
+   * momento suena al menos `minMs` para que se oiga.
+   */
+  function advanceAuto({ minMs = 5000, fadeSeconds = 0.9 } = {}) {
+    const ctx = musicCtx;
+    const p = store.get().history.playing;
+    if (!ctx || !ctx.auto || ctx.token !== playToken || !p || p.phase !== 'music' || p.epoch !== ctx.which) return false;
+    const wait = Math.max(0, minMs - (Date.now() - ctx.at));
+    setTimeoutFn(() => {
+      const now = store.get().history.playing;
+      if (ctx.token !== playToken || musicCtx !== ctx || !now || now.phase !== 'music') return;
+      musicCtx = null;
+      mixer?.fadeOut ? mixer.fadeOut(fadeSeconds) : mixer?.stop();
+      handleEnd(ctx.which, ctx.auto, ctx.token);
+    }, wait);
+    return true;
+  }
+
   function handleEnd(which, auto, token) {
     if (token !== playToken) return;
+    musicCtx = null;
     const res = store.get().history.result;
     // Secuencia: 1950 -> tu anio (si hay) -> ultimos 5 anios.
     const next = auto ? (which === 'a' ? (res?.n && res.n.value !== null ? 'n' : 'b') : which === 'n' ? 'b' : null) : null;
@@ -159,15 +188,11 @@ export function createHistoryController({
           if (!started.ok && !failedWithState) patch({ playing: null, ended: true });
           return started;
         });
-      }, gapMs);
+      }, next === 'b' && res?.story ? Math.max(gapMs, interludeMs) : gapMs);
       return;
     }
     patch({ playing: null, ended: true });
-    // Fin del relato completo: el relator lee la reflexion final.
-    const st = store.get();
-    if (auto && st.history.voice && st.history.result?.story && !st.audio.muted) {
-      narrator?.speak(reflectionMessage(st.history.result, st.lang), st.lang, { rate: 0.9 });
-    }
+    // El cierre del relato de cumpleanos lo narra el panel "Tu historia" (life-ui.js).
   }
 
   async function play(which) {
@@ -353,5 +378,5 @@ export function createHistoryController({
     if (h.playing && state.audio.muted) stop();
   }
 
-  return { submit, submitStory, viewEpoch, playMix, playLayer, setMusicMuted, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce };
+  return { submit, submitStory, viewEpoch, playMix, playLayer, setMusicMuted, applyShared, play, playAuto, repeat, stop, speakStory, setVoice, cancelQuery, clear, enforce, advanceAuto };
 }

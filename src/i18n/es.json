@@ -540,5 +540,8 @@
   "ariaPointInfo": "Información del punto seleccionado",
   "ariaLegend": "Leyenda de anomalía",
   "ariaCompare": "Comparar A/B",
-  "ariaEicResources": "Recursos EIC"
+  "ariaEicResources": "Recursos EIC",
+  "lifeEyebrow": "Tu historia",
+  "lifeDataSummary": "Ver los datos",
+  "lifeSaveMessage": "Guardar mi mensaje para el futuro"
 }

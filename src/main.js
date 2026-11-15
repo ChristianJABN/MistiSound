@@ -27,6 +27,7 @@ import { DjMixer } from './audio/mixer.js';
 import { StoryPlayer, preloadPiano } from './history/story-player.js';
 import { getMusicStyle, setMusicStyle } from './history/music-style.js';
 import { createMistiUi } from './ui/misti-ui.js';
+import { createLifeStory } from './ui/life-ui.js';
 import { createLayersLoader } from './layers/layers-loader.js';
 import { createFlow } from './ui/flow.js';
 import { createHeroGlobe } from './ui/hero-globe.js';
@@ -524,6 +525,7 @@ async function init() {
   // Globo holografico de la primera pantalla (solo en la etapa inicial).
   const heroGlobe = createHeroGlobe(document.getElementById('hero-globe'), { baseUrl: import.meta.env.BASE_URL });
   const experiences = createExperiences({ store, audioEngine, controller: historyController });
+  const lifeStory = createLifeStory({ store, narrator, controller: historyController });
   const mistiUi = createMistiUi({
     store,
     audioEngine,
@@ -772,6 +774,7 @@ async function init() {
     historyController.enforce(state);
     layersLoader.sync(state);
     mistiUi.render(state);
+    lifeStory.render(state);
     flow.render(state);
     heroGlobe.render(state);
     experiences.render(state);
@@ -791,6 +794,7 @@ async function init() {
   jukeboxPanel.render(store.get());
   historyPanel.render(store.get());
   mistiUi.render(store.get());
+  lifeStory.render(store.get());
   flow.render(store.get());
   heroGlobe.render(store.get());
   share.render(store.get());

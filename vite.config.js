@@ -23,7 +23,12 @@ function ttsDevServer() {
           } catch {
             // cuerpo invalido: lo rechaza la validacion
           }
-          const out = await handleTts(body, { apiKey: env.ELEVENLABS_API_KEY });
+          let out;
+          try {
+            out = await handleTts(body, { apiKey: env.ELEVENLABS_API_KEY });
+          } catch {
+            out = { ok: false, status: 500, error: 'tts' };
+          }
           if (!out.ok) {
             res.statusCode = out.status;
             res.setHeader('Content-Type', 'application/json');

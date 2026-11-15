@@ -30,6 +30,16 @@ describe('relator ElevenLabs: servidor', () => {
   });
 });
 
+describe('relator ElevenLabs: red', () => {
+  it('un fallo de red no lanza (antes tumbaba el servidor): responde 504', async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError('fetch failed');
+    });
+    const out = await handleTts({ text: 'Hola', lang: 'es' }, { apiKey: 'k', fetchImpl });
+    expect(out).toMatchObject({ ok: false, status: 504, error: 'network' });
+  });
+});
+
 describe('relator ElevenLabs: navegador', () => {
   it('un fallo desactiva la nube para la visita (vuelve a la voz del navegador)', async () => {
     const fetchImpl = vi.fn(async () => ({ ok: false, status: 503, headers: { get: () => 'application/json' } }));
@@ -38,6 +48,33 @@ describe('relator ElevenLabs: navegador', () => {
     expect(cloud.isDisabled()).toBe(true);
     expect(await cloud.load('Otra', 'es')).toBeNull();
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('un 429 (limite de peticiones) se reintenta y NO apaga la nube', async () => {
+    globalThis.URL.createObjectURL ??= () => 'blob:x';
+    let n = 0;
+    const fetchImpl = vi.fn(async () => (++n === 1 ? { ok: false, status: 429, headers: { get: () => 'application/json' } } : { ok: true, headers: { get: () => 'audio/mpeg' }, blob: async () => new Blob(['x']) }));
+    const cloud = createCloudVoice({ fetchImpl, sleep: async () => {} });
+    expect(await cloud.load('Hola', 'es')).toBeTruthy();
+    expect(cloud.isDisabled()).toBe(false);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('pide como maximo 2 frases a la vez (fila)', async () => {
+    globalThis.URL.createObjectURL ??= () => 'blob:x';
+    let active = 0;
+    let peak = 0;
+    const fetchImpl = vi.fn(async () => {
+      active += 1;
+      peak = Math.max(peak, active);
+      await new Promise((r) => setTimeout(r, 5));
+      active -= 1;
+      return { ok: true, headers: { get: () => 'audio/mpeg' }, blob: async () => new Blob(['x']) };
+    });
+    const cloud = createCloudVoice({ fetchImpl });
+    await Promise.all(['a', 'b', 'c', 'd'].map((t) => cloud.load(t, 'es')));
+    expect(peak).toBe(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(4);
   });
 
   it('la misma frase se descarga una sola vez (precarga + reproduccion)', async () => {

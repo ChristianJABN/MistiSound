@@ -224,13 +224,14 @@ describe('controlador: relato de cumpleanos', () => {
     expect(h.mixer.lastStart).toBeUndefined();
   });
 
-  it('el presente recibe la serie de 5 anios y el valor del pasado; voz mas lenta en el pasado', async () => {
+  it('el presente recibe la serie de 5 anios y el valor del pasado; la voz la pone "Tu historia"', async () => {
     const h = harness();
     await h.controller.submitStory({ place: { lat: 0, lon: 0 }, day: '14', month: '1' });
     h.controller.setVoice(true);
     await h.controller.playAuto();
     expect(h.story[0].which).toBe('a');
-    expect(h.narrator.speak.mock.calls[0][2].rate).toBeLessThan(1);
+    // En el relato de cumpleanos el controlador no narra: lo hace el panel Tu historia (life-ui.js).
+    expect(h.narrator.speak).not.toHaveBeenCalled();
     h.mixer.lastStart.onEnd();
     expect(h.store.get().history.playing).toMatchObject({ epoch: 'b', phase: 'gap' });
   });

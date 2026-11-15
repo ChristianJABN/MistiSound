@@ -252,14 +252,44 @@
               <p class="layer-legend"><span aria-hidden="true">♥</span> <span data-i18n="layerTempLegend"></span></p>
             </article>
           </div>
+        </section>
+
+        <aside id="charts-column" aria-label="Gráficos / Charts">
           <div class="chart-row">
             <article class="chart-card chart-co2"><h3 data-i18n="chartCo2Title"></h3><p class="chart-sub" id="chart-co2-sub"></p><canvas id="chart-co2" width="560" height="260" role="img" aria-label=""></canvas></article>
             <article class="chart-card chart-ozone"><h3 data-i18n="chartOzoneTitle"></h3><p class="chart-sub" id="chart-ozone-sub"></p><canvas id="chart-ozone" width="560" height="260" role="img" aria-label=""></canvas></article>
             <article class="chart-card chart-temp"><h3 data-i18n="chartTempTitle"></h3><p class="chart-big" id="chart-temp-big"></p><canvas id="chart-temp" width="560" height="260" role="img" aria-label=""></canvas></article>
           </div>
-        </section>
-
+        </aside>
         <aside id="history-stage" aria-labelledby="stage-title">
+          <section id="life-panel" class="life-panel" aria-labelledby="life-title">
+            <p class="eyebrow" id="life-title" data-i18n="lifeEyebrow"></p>
+            <div id="life-text" class="life-text" aria-live="polite"></div>
+            <div id="life-timeline" class="life-timeline" aria-hidden="true"><div class="life-line"><div class="life-progress"></div></div></div>
+            <div class="big-play-row">
+              <button type="button" id="history-listen-auto" class="big-play"><span aria-hidden="true">▶</span><span class="sr-only" data-i18n="historyListenAuto"></span></button>
+              <button type="button" id="history-stop" class="secondary-btn"></button>
+              <button type="button" id="history-mix" class="mix-btn" disabled><span data-i18n="mixBtn"></span></button>
+            </div>
+            <div class="music-style-row">
+              <label for="music-style" data-i18n="musicStyleLabel"></label>
+              <select id="music-style">
+                <option value="ambient" data-i18n="musicStyleAmbient"></option>
+                <option value="classic" data-i18n="musicStyleClassic"></option>
+              </select>
+            </div>
+            <div id="life-closing" class="life-closing" hidden>
+              <label for="future-msg" id="future-q" class="life-question"></label>
+              <textarea id="future-msg" rows="2" maxlength="600"></textarea>
+              <button type="button" id="future-save" class="action-btn" data-i18n="lifeSaveMessage"></button>
+            <div class="share-row">
+              <button type="button" id="share-instagram" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span data-i18n="shareInstagram"></span></button>
+              <button type="button" id="share-tiktok" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.1c-1.5 0-2.8-.4-4-1.2V15a6 6 0 1 1-6-6v3.2a2.8 2.8 0 1 0 2.8 2.8V3h3.2z"/></svg><span data-i18n="shareTiktok"></span></button>
+            </div>
+            <button type="button" id="exp-open-inline" class="link-btn" data-i18n="expAddYours"></button>
+            </div>
+          </section>
+          <details id="data-details" class="data-details"><summary data-i18n="lifeDataSummary"></summary>
           <section class="sound-panel" aria-labelledby="stage-title">
             <p class="eyebrow" data-i18n="auroraTwoMoments"></p>
             <h2 id="stage-title" class="stage-title" data-i18n="soundPanelTitle"></h2>
@@ -285,20 +315,8 @@
                 <button type="button" id="history-listen-b" class="play-mini" disabled><span aria-hidden="true">▶</span></button>
               </li>
             </ol>
-            <div class="big-play-row">
-              <button type="button" id="history-listen-auto" class="big-play"><span aria-hidden="true">▶</span><span class="sr-only" data-i18n="historyListenAuto"></span></button>
-              <button type="button" id="history-stop" class="secondary-btn"></button>
-              <button type="button" id="history-mix" class="mix-btn" disabled><span data-i18n="mixBtn"></span></button>
-            </div>
             <p id="history-play-status" role="status"></p>
             <p id="history-audio-hint"></p>
-            <div class="music-style-row">
-              <label for="music-style" data-i18n="musicStyleLabel"></label>
-              <select id="music-style">
-                <option value="ambient" data-i18n="musicStyleAmbient"></option>
-                <option value="classic" data-i18n="musicStyleClassic"></option>
-              </select>
-            </div>
           </section>
           <section class="conclusions" aria-labelledby="concl-title">
             <h2 id="concl-title" data-i18n="conclusionsTitle"></h2>
@@ -310,11 +328,6 @@
             <p id="history-card-delta" class="moment-delta"></p>
             <p id="m-b-text" class="concl-text" data-i18n="momentAfterText"></p>
             <p id="metrics-note" class="field-help"></p>
-            <div class="share-row">
-              <button type="button" id="share-instagram" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span data-i18n="shareInstagram"></span></button>
-              <button type="button" id="share-tiktok" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.1c-1.5 0-2.8-.4-4-1.2V15a6 6 0 1 1-6-6v3.2a2.8 2.8 0 1 0 2.8 2.8V3h3.2z"/></svg><span data-i18n="shareTiktok"></span></button>
-            </div>
-            <button type="button" id="exp-open-inline" class="link-btn" data-i18n="expAddYours"></button>
             <p id="history-card-status" role="status"></p>
           </section>
           <section id="history-result" hidden aria-label="Resultado" data-i18n-aria="ariaResult">
@@ -356,6 +369,7 @@
               </details>
             </section>
           </section>
+                  </details>
         </aside>
       </main>
       <div id="support-row"><p class="data-credit"><span class="signal-dot" aria-hidden="true"></span><span data-i18n="auroraDataCredit"></span></p><details id="share-drawer" class="support-drawer"><summary><span aria-hidden="true">↗</span> <span data-i18n="auroraShare"></span></summary>          <section id="share-section" aria-label="Compartir" data-i18n-aria="ariaShare">

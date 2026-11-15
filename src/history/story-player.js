@@ -241,6 +241,16 @@ export class StoryPlayer {
     this._teardown();
   }
 
+  /** Apaga la pieza en `seconds` (sin llamar a onEnd): el relato sigue antes. */
+  fadeOut(seconds = 1) {
+    this.waitToken = null;
+    for (const id of this.timers) this.clearTimer(id);
+    this.timers = [];
+    if (!this.out) return;
+    this.out.gain.rampTo(0, seconds);
+    this.timers.push(this.setTimer(() => this._teardown(), seconds * 1000 + 50));
+  }
+
   dispose() {
     this._teardown();
     this.verb?.dispose();

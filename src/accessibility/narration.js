@@ -64,44 +64,89 @@ function dbToLinearVolume(db) {
 
 /**
  * Relator de ElevenLabs via /api/tts (funcion del servidor: la clave nunca
- * esta en el navegador). Cachea cada audio por texto+idioma+ritmo y se
- * desactiva para la visita al primer fallo (sitio sin la funcion, sin clave
- * o sin creditos), volviendo a la voz del navegador sin demoras.
+ * esta en el navegador). Cachea cada audio por texto+idioma+ritmo.
+ *
+ * Fiabilidad: el plan de ElevenLabs limita las peticiones simultaneas (429).
+ * Por eso las frases se piden en FILA (como maximo `concurrency` a la vez,
+ * la que va a sonar primero) y un 429, un error 5xx o una demora se
+ * REINTENTAN con espera. Solo se apaga la nube para la visita cuando falta
+ * la clave o no hay creditos/permiso (503, 401, 402, 403, 404): ahi vuelve a
+ * la voz del navegador sin demoras.
  */
-export function createCloudVoice({ endpoint = '/api/tts', fetchImpl = (...a) => fetch(...a), timeoutMs = 6000 } = {}) {
+const CLOUD_FATAL = new Set([401, 402, 403, 404, 503]);
+
+export function createCloudVoice({ endpoint = '/api/tts', fetchImpl = (...a) => fetch(...a), timeoutMs = 15000, concurrency = 2, retries = 3, retryDelayMs = 700, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
   const cache = new Map();
+  const queue = [];
+  let active = 0;
   let disabled = false;
   function key(text, lang, rate) {
     return `${lang}|${Math.round((Number(rate) || 1) * 100)}|${text}`;
   }
-  /** Promesa con la URL del audio (object URL) o null si no hay voz en la nube. */
-  function load(text, lang, rate = 1) {
-    if (disabled || !text) return Promise.resolve(null);
-    const k = key(text, lang, rate);
-    if (!cache.has(k)) {
+  function pump() {
+    while (active < concurrency && queue.length) {
+      const job = queue.shift();
+      active += 1;
+      job.run().then(job.resolve, () => job.resolve(null)).finally(() => {
+        active -= 1;
+        pump();
+      });
+    }
+  }
+  async function fetchAudio(text, lang, rate) {
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      if (disabled) return null;
       const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
       const timer = setTimeout(() => ctrl?.abort(), timeoutMs);
-      const p = fetchImpl(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, lang, rate }),
-        signal: ctrl?.signal
-      })
-        .then(async (res) => {
-          if (!res.ok || !(res.headers.get('content-type') || '').includes('audio')) throw new Error(`tts ${res.status}`);
-          return URL.createObjectURL(await res.blob());
-        })
-        .catch(() => {
+      try {
+        const res = await fetchImpl(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, lang, rate }),
+          signal: ctrl?.signal
+        });
+        if (res.ok && (res.headers.get('content-type') || '').includes('audio')) return URL.createObjectURL(await res.blob());
+        if (CLOUD_FATAL.has(res.status)) {
           disabled = true;
-          cache.delete(k);
           return null;
-        })
-        .finally(() => clearTimeout(timer));
-      cache.set(k, p);
+        }
+      } catch {
+        // red o demora: se reintenta
+      } finally {
+        clearTimeout(timer);
+      }
+      if (attempt < retries) await sleep(retryDelayMs * (attempt + 1));
     }
-    return cache.get(k);
+    return null;
   }
-  return { load, preload: load, isDisabled: () => disabled };
+  /** Promesa con la URL del audio (object URL) o null si no hay voz en la nube. `urgent` = va a sonar ya. */
+  function load(text, lang, rate = 1, { urgent = false } = {}) {
+    if (disabled || !text) return Promise.resolve(null);
+    const k = key(text, lang, rate);
+    const hit = cache.get(k);
+    if (hit) {
+      // Si estaba en fila esperando, pasa al frente: es la que va a sonar.
+      if (urgent && hit.job) {
+        const i = queue.indexOf(hit.job);
+        if (i > 0) queue.unshift(...queue.splice(i, 1));
+      }
+      return hit.promise;
+    }
+    const job = {};
+    const promise = new Promise((resolve) => {
+      job.resolve = resolve;
+      job.run = () => fetchAudio(text, lang, rate);
+    }).then((url) => {
+      if (!url) cache.delete(k); // un fallo pasajero no queda cacheado
+      return url;
+    });
+    cache.set(k, { promise, job });
+    if (urgent) queue.unshift(job);
+    else queue.push(job);
+    pump();
+    return promise;
+  }
+  return { load, preload: (text, lang, rate) => load(text, lang, rate), isDisabled: () => disabled };
 }
 
 export function createNarrator({ audioEngine, cloud = null } = {}) {
@@ -195,7 +240,7 @@ export function createNarrator({ audioEngine, cloud = null } = {}) {
     if (cloud && !cloud.isDisabled()) {
       cancel();
       const myToken = token;
-      cloud.load(text, lang, rate).then((url) => {
+      cloud.load(text, lang, rate, { urgent: true }).then((url) => {
         if (myToken !== token) return; // otra frase o un cancel llegaron antes
         if (url) playCloud(url, lang, myToken);
         else speakBrowser(text, lang, { rate });
