@@ -300,7 +300,17 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     reflectionOpen = false;
     // Con todos los campos completos empieza la intro (ver src/ui/flow.js); la
     // validacion fina (fecha real, datos disponibles) la hace el controlador.
-    if (place && dayInput.value && monthSelect.value && yearInput.value) document.dispatchEvent(new CustomEvent('misti:submit'));
+    if (place && dayInput.value && monthSelect.value && yearInput.value) {
+      const detail = {
+        place: place.name || label || null,
+        lat: place.lat,
+        day: Number(dayInput.value),
+        month: Number(monthSelect.value),
+        monthName: monthSelect.selectedOptions?.[0]?.textContent?.trim().toLowerCase() || '',
+        year: Number(yearInput.value)
+      };
+      document.dispatchEvent(new CustomEvent('misti:submit', { detail }));
+    }
     const outcome = await controller.submitStory({
       place: place ? { lat: place.lat, lon: place.lon, label } : null,
       day: dayInput.value,

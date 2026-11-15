@@ -5,9 +5,12 @@
 // El estado vive en <html data-stage>. Al revelar se emite 'misti:reveal'
 // (las esferas hacen su acercamiento y empieza el relato).
 import { t } from '../i18n/index.js';
+import { buildIntroLines } from './intro-lines.js';
 
-const MIN_INTRO_MS = 4200;
-const LINES = ['introLine1', 'introLine2', 'introLine3'];
+// Cada frase se queda LINE_MS en pantalla (aparece palabra por palabra, se lee
+// con calma y se desvanece). La intro dura al menos las 3 frases completas.
+const LINE_MS = 5500;
+const FALLBACK = ['introLine1', 'introLine2', 'introLine3'];
 
 export function createFlow({ store }) {
   const root = document.documentElement;
@@ -21,6 +24,8 @@ export function createFlow({ store }) {
   let lineTimer = 0;
   let lineIdx = 0;
   let skipRequested = false;
+  let lines = [];
+  let minIntroMs = LINE_MS * 3;
 
   const stage = () => root.dataset.stage;
   function setStage(next) {
@@ -32,9 +37,25 @@ export function createFlow({ store }) {
   }
 
   function showLine() {
+    // Al terminar las frases, si los datos aun no llegan, repite el cierre.
+    const segs = lines[Math.min(lineIdx, lines.length - 1)];
     text.classList.remove('is-in');
     void text.offsetWidth;
-    text.textContent = t(store.get().lang, LINES[lineIdx % LINES.length]);
+    text.replaceChildren();
+    let i = 0;
+    for (const seg of segs) {
+      for (const part of seg.text.split(/(\s+)/)) {
+        if (!part) continue;
+        if (/^\s+$/.test(part)) { text.append(part); continue; }
+        const w = document.createElement('span');
+        w.className = seg.hl ? 'intro-word intro-hl' : 'intro-word';
+        w.style.setProperty('--i', String(i));
+        w.textContent = part;
+        text.append(w);
+        i += 1;
+      }
+    }
+    text.setAttribute('aria-label', segs.map((s) => s.text).join(''));
     text.classList.add('is-in');
     lineIdx += 1;
   }
@@ -88,9 +109,17 @@ export function createFlow({ store }) {
     if (stage() === 'intro') raf = requestAnimationFrame(drawIntro);
   }
 
-  function startIntro() {
+  function startIntro(event) {
     skipRequested = false;
     lineIdx = 0;
+    const lang = store.get().lang;
+    try {
+      lines = buildIntroLines(lang, event?.detail ?? {});
+    } catch {
+      lines = [];
+    }
+    if (!lines.length) lines = FALLBACK.map((k) => [{ text: t(lang, k), hl: false }]);
+    minIntroMs = LINE_MS * lines.length - 300;
     startedAt = performance.now();
     if (reduced()) {
       setStage('intro');
@@ -102,7 +131,7 @@ export function createFlow({ store }) {
     overlay.hidden = false;
     showLine();
     clearInterval(lineTimer);
-    lineTimer = setInterval(showLine, 1500);
+    lineTimer = setInterval(showLine, LINE_MS);
     if (!raf) raf = requestAnimationFrame(drawIntro);
   }
 
@@ -137,7 +166,7 @@ export function createFlow({ store }) {
         return;
       }
       if (ready) {
-        const left = MIN_INTRO_MS - (performance.now() - startedAt);
+        const left = minIntroMs - (performance.now() - startedAt);
         if (left <= 0 || skipRequested || reduced()) endIntro('dash');
         else {
           clearTimeout(checkTimer);
