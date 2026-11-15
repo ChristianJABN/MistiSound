@@ -141,6 +141,8 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
     root.dataset.effects = enabled ? 'on' : 'off';
     effectsButton.setAttribute('aria-pressed', String(enabled));
     effectsButton.disabled = reduceMotion.matches;
+    const bgVideo = document.getElementById('bg-video');
+    if (bgVideo) { if (enabled) bgVideo.play?.()?.catch(() => {}); else bgVideo.pause(); }
     const lang = store.get().lang;
     const label = t(lang, reduceMotion.matches ? 'auroraReducedMotion' : enabled ? 'auroraEffects' : 'auroraEffectsOff');
     effectsButton.lastElementChild.textContent = label;
