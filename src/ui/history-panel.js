@@ -325,9 +325,9 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
         monthName: monthSelect.selectedOptions?.[0]?.textContent?.trim().toLowerCase() || '',
         year: Number(yearInput.value)
       };
-      // "Escuchar mi fecha" = relato con voz de relator, salvo que la persona
-      // la haya apagado antes en "Opciones de escucha".
-      if (readVoicePref() !== 'off' && narrator?.isSupported?.()) controller.setVoice(true);
+      // La voz del relator solo narra la intro (src/ui/flow.js). Los anuncios
+      // de cada momento siguen siendo opcionales ("Opciones de escucha").
+      if (readVoicePref() === 'on' && narrator?.isSupported?.()) controller.setVoice(true);
       document.dispatchEvent(new CustomEvent('misti:submit', { detail }));
     }
     const outcome = await controller.submitStory({

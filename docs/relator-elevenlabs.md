@@ -6,8 +6,8 @@ ElevenLabs:
 
 | Idioma | Voz | ID |
 |---|---|---|
-| Inglés | George · Warm, Captivating Storyteller | `JBFqnCBsd6RMkjVDRZzb` |
-| Español | Luisa · latinoamericana, narración | `ByzPpv6d6pT90CCpgb7k` |
+| Inglés | Brian · Deep, Resonant and Comforting | `nPczCjzI2devNBz1zQrb` |
+| Español | Diego · latinoamericano, narración | `J3JSkWXJwqClE1dIxQM9` |
 
 Se usa el modelo `eleven_multilingual_v2`. El pasado se lee más pausado
 (0,88) y el presente a ritmo natural (0,97).

@@ -8,10 +8,10 @@
 
 export const MAX_CHARS = 420;
 export const VOICES = {
-  // George · Warm, Captivating Storyteller (premade, narracion)
-  en: 'JBFqnCBsd6RMkjVDRZzb',
-  // Luisa · latinoamericana, narracion
-  es: 'ByzPpv6d6pT90CCpgb7k'
+  // Brian · Deep, Resonant and Comforting (premade, voz grave de narrador)
+  en: 'nPczCjzI2devNBz1zQrb',
+  // Diego · latinoamericano, narracion (voz de narrador masculina)
+  es: 'J3JSkWXJwqClE1dIxQM9'
 };
 export const MODEL_ID = 'eleven_multilingual_v2';
 

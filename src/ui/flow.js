@@ -19,6 +19,18 @@ export function createFlow({ store, narrator = null }) {
   const text = document.getElementById('intro-text');
   const skip = document.getElementById('intro-skip');
   const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  // El relator solo narra la presentacion (las frases de la intro). Los
+  // momentos del relato se anuncian con voz solo si la persona lo activa en
+  // "Opciones de escucha". Respeta el silencio y la preferencia guardada.
+  const introVoice = () => {
+    if (!narrator || store.get().audio?.muted) return false;
+    try {
+      if (localStorage.getItem('misti-intro-voice') === 'off') return false;
+    } catch {
+      /* sin almacenamiento */
+    }
+    return narrator.isSupported?.() ?? true;
+  };
   let startedAt = 0;
   let raf = 0;
   let lineTimer = 0;
@@ -59,7 +71,7 @@ export function createFlow({ store, narrator = null }) {
     text.setAttribute('aria-label', plain);
     // Relator: lee cada frase de la intro una sola vez (sin repetir el cierre
     // si los datos tardan), con un ritmo sereno.
-    if (narrator && store.get().history.voice && lineIdx < lines.length) narrator.speak(plain, store.get().lang, { rate: 0.9 });
+    if (introVoice() && lineIdx < lines.length) narrator.speak(plain, store.get().lang, { rate: 0.9 });
     text.classList.add('is-in');
     lineIdx += 1;
   }
@@ -207,7 +219,7 @@ export function createFlow({ store, narrator = null }) {
     }
     if (!lines.length) lines = FALLBACK.map((k) => [{ text: t(lang, k), hl: false }]);
     // Relator: descarga ya las 3 frases para que la voz no se retrase.
-    if (narrator && store.get().history.voice) for (const segs of lines) narrator.preload?.(segs.map((x) => x.text).join(''), lang, { rate: 0.9 });
+    if (introVoice()) for (const segs of lines) narrator.preload?.(segs.map((x) => x.text).join(''), lang, { rate: 0.9 });
     minIntroMs = LINE_MS * lines.length - 300;
     startedAt = performance.now();
     if (reduced()) {

@@ -11,6 +11,8 @@
  * "Premium"/"Enhanced"/Siri en Apple), que suenan humanas y armoniosas, y
  * despues el acento latinoamericano (es-PE > es-419/MX/US > es-ES).
  */
+const NARRATOR_VOICES = /(andrew|brian|guy|christopher|davis|eric|roger|steffan|daniel|arthur|jorge|alex|alvaro|álvaro|gerardo|tomas|tomás|lorenzo|mateo|diego|juan|carlos)/i;
+
 export function scoreVoice(v, lang) {
   const l = (v.lang ?? '').toLowerCase().replace('_', '-');
   if (!l.startsWith(lang === 'en' ? 'en' : 'es')) return -1;
@@ -21,6 +23,10 @@ export function scoreVoice(v, lang) {
   if (/google/i.test(name)) s += 35;
   if (/premium|enhanced|siri/i.test(name)) s += 30;
   if (v.localService === false) s += 8;
+  // Timbre de narrador: voces graves y pausadas conocidas (Edge/Windows,
+  // Chrome, Apple). Pesa menos que "neural": una voz robotica grave no gana
+  // a una natural.
+  if (NARRATOR_VOICES.test(name)) s += 25;
   if (lang === 'en') {
     if (l === 'en-us') s += 6;
   } else if (l === 'es-pe') s += 14;
@@ -207,7 +213,8 @@ export function createNarrator({ audioEngine, cloud = null } = {}) {
     // Ritmo de la voz: mas lento y sereno en el pasado del relato, algo mas
     // rapido en el presente (ver story-core.js). Acotado a un rango comodo.
     utterance.rate = Math.min(1.3, Math.max(0.7, Number(rate) || 1));
-    utterance.pitch = 1;
+    // Un poco mas grave: suena mas a narrador de documental.
+    utterance.pitch = 0.9;
     const voice = pickVoice(synth, lang);
     if (voice) utterance.voice = voice;
     // La voz sigue el volumen maestro y el mute (ganancia lineal 0..1
