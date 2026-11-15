@@ -5,19 +5,45 @@
 // UI debe seguir funcionando solo con el texto (ver ui/peru-panel.js y
 // ui/accessible-panel.js: nunca dependen de esto para mostrar informacion).
 
-function pickVoice(synth, lang) {
-  const voices = synth.getVoices();
-  if (!voices || voices.length === 0) return null;
+/**
+ * Puntaje de una voz para el relator de Misti Sound: se prefieren las voces
+ * neuronales ("Natural", "Neural", "Online" en Edge; "Google" en Chrome;
+ * "Premium"/"Enhanced"/Siri en Apple), que suenan humanas y armoniosas, y
+ * despues el acento latinoamericano (es-PE > es-419/MX/US > es-ES).
+ */
+export function scoreVoice(v, lang) {
+  const l = (v.lang ?? '').toLowerCase().replace('_', '-');
+  if (!l.startsWith(lang === 'en' ? 'en' : 'es')) return -1;
+  const name = v.name ?? '';
+  let s = 0;
+  if (/natural|neural/i.test(name)) s += 60;
+  if (/online/i.test(name)) s += 20;
+  if (/google/i.test(name)) s += 35;
+  if (/premium|enhanced|siri/i.test(name)) s += 30;
+  if (v.localService === false) s += 8;
   if (lang === 'en') {
-    return voices.find((v) => v.lang?.toLowerCase().startsWith('en')) ?? null;
+    if (l === 'en-us') s += 6;
+  } else if (l === 'es-pe') s += 14;
+  else if (['es-419', 'es-mx', 'es-us', 'es-co', 'es-cl', 'es-ar'].includes(l)) s += 9;
+  else if (l === 'es-es') s += 3;
+  return s;
+}
+
+export function pickBestVoice(voices, lang) {
+  let best = null;
+  let bestScore = -1;
+  for (const v of voices ?? []) {
+    const sc = scoreVoice(v, lang);
+    if (sc > bestScore) {
+      best = v;
+      bestScore = sc;
+    }
   }
-  // Preferencia es-PE > es-* > en-* si no hay ninguna voz en espanol
-  // (nunca se garantiza que exista una voz peruana instalada).
-  return (
-    voices.find((v) => v.lang?.toLowerCase() === 'es-pe') ??
-    voices.find((v) => v.lang?.toLowerCase().startsWith('es')) ??
-    null
-  );
+  return bestScore >= 0 ? best : null;
+}
+
+function pickVoice(synth, lang) {
+  return pickBestVoice(synth.getVoices(), lang);
 }
 
 // Convierte dB (rango de AUDIO_SAFETY, siempre <= 0) a ganancia lineal
@@ -25,7 +51,9 @@ function pickVoice(synth, lang) {
 // (mute real) se mapea a 0 exacto, nunca a un residuo audible.
 function dbToLinearVolume(db) {
   if (db === -Infinity || typeof db !== 'number' || !Number.isFinite(db)) return 0;
-  return Math.min(1, Math.max(0, 10 ** (db / 20)));
+  // La voz va por encima de la musica (que se atenua mientras habla): el
+  // control de volumen la sube o baja, pero sin que llegue a susurrar.
+  return Math.min(1, Math.max(0, 0.6 + 0.4 * ((Math.max(-40, Math.min(0, db)) + 40) / 40)));
 }
 
 export function createNarrator({ audioEngine } = {}) {
@@ -87,6 +115,7 @@ export function createNarrator({ audioEngine } = {}) {
     // Ritmo de la voz: mas lento y sereno en el pasado del relato, algo mas
     // rapido en el presente (ver story-core.js). Acotado a un rango comodo.
     utterance.rate = Math.min(1.3, Math.max(0.7, Number(rate) || 1));
+    utterance.pitch = 1;
     const voice = pickVoice(synth, lang);
     if (voice) utterance.voice = voice;
     // La voz sigue el volumen maestro y el mute (ganancia lineal 0..1

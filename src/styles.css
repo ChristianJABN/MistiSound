@@ -513,7 +513,7 @@ html:not([data-mode='history']) #side-panel{grid-column:2}
 #history-demo{display:block;margin:.6rem auto 0}
 .shortcuts-wrap{position:relative;margin-top:1rem;text-align:center}
 .link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.85rem;min-height:2.2rem}
-.shortcuts-pop{position:absolute;bottom:calc(100% + .4rem);left:50%;transform:translateX(-50%);z-index:20;width:min(22rem,90vw);padding:.9rem 1rem;border:1px solid var(--mint-line);border-radius:1rem;background:#05140fef;box-shadow:0 1rem 2.5rem #000a;text-align:left}
+.shortcuts-pop{position:fixed;z-index:80;max-height:calc(100vh - 1.5rem);overflow:auto;width:min(22rem,90vw);padding:.9rem 1rem;border:1px solid var(--mint-line);border-radius:1rem;background:#05140fef;box-shadow:0 1rem 2.5rem #000a;text-align:left}
 .shortcuts-pop dl{display:grid;gap:.45rem;margin:0}
 .shortcuts-pop dl>div{display:grid;grid-template-columns:4.2rem 1fr;align-items:center;gap:.6rem}
 .shortcuts-pop dd{margin:0;color:#fff;font-size:.85rem}
@@ -782,3 +782,7 @@ html[data-stage='dash'][data-mode='history'] #history-stage{grid-column:2;grid-r
   .intro-text{opacity:1}
   .intro-word{opacity:1;filter:none;transform:none}
 }
+
+/* Globo de temperatura: misma mano que las otras esferas */
+.layer-globe #globe-container,.layer-globe #globe-container canvas{cursor:grab}
+.layer-globe #globe-container:active,.layer-globe #globe-container:active canvas{cursor:grabbing}

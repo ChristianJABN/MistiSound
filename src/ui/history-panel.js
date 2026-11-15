@@ -25,6 +25,22 @@ import {
 import { shareStoryCard, storyCardText } from './story-card.js';
 import { ensureAudio } from '../app/ensure-audio.js';
 
+const VOICE_PREF = 'misti-voice';
+function readVoicePref() {
+  try {
+    return localStorage.getItem(VOICE_PREF);
+  } catch {
+    return null;
+  }
+}
+function writeVoicePref(v) {
+  try {
+    localStorage.setItem(VOICE_PREF, v);
+  } catch {
+    // sin almacenamiento: vale solo en esta visita
+  }
+}
+
 export function createHistoryPanel({ store, controller, repository, loadCities, getGlobePoint, narrator, audioEngine }) {
   const withAudio = async (fn) => {
     if (audioEngine && !(await ensureAudio({ audioEngine, store }))) return undefined;
@@ -309,6 +325,9 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
         monthName: monthSelect.selectedOptions?.[0]?.textContent?.trim().toLowerCase() || '',
         year: Number(yearInput.value)
       };
+      // "Escuchar mi fecha" = relato con voz de relator, salvo que la persona
+      // la haya apagado antes en "Opciones de escucha".
+      if (readVoicePref() !== 'off' && narrator?.isSupported?.()) controller.setVoice(true);
       document.dispatchEvent(new CustomEvent('misti:submit', { detail }));
     }
     const outcome = await controller.submitStory({
@@ -386,7 +405,10 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
   }
   cardShare.addEventListener('click', () => handleCard(false));
   cardDownload.addEventListener('click', () => handleCard(true));
-  voiceBox.addEventListener('change', () => controller.setVoice(voiceBox.checked));
+  voiceBox.addEventListener('change', () => {
+    writeVoicePref(voiceBox.checked ? 'on' : 'off');
+    controller.setVoice(voiceBox.checked);
+  });
   speakBtn.addEventListener('click', () => controller.speakStory());
   clearBtn.addEventListener('click', () => {
     controller.clear();

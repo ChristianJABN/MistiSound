@@ -500,7 +500,7 @@ async function init() {
   });
   // Misti Sound: capas CO2/ozono, A+, guia docente, atajos y compartir.
   const layersLoader = createLayersLoader({ store, baseUrl: import.meta.env.BASE_URL });
-  const flow = createFlow({ store });
+  const flow = createFlow({ store, narrator });
   const experiences = createExperiences({ store, audioEngine, controller: historyController });
   const mistiUi = createMistiUi({
     store,

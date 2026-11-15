@@ -165,3 +165,18 @@ describe('Misti Sound v2: capas del anio de nacimiento', () => {
     expect(recent.birth).toEqual({ year: 2010, du: 251, measured: true });
   });
 });
+
+describe('relator: eleccion de voz', () => {
+  it('prefiere voces neuronales y acento latinoamericano; ignora otros idiomas', async () => {
+    const { pickBestVoice } = await import('../src/accessibility/narration.js');
+    const voices = [
+      { name: 'Microsoft Helena - Spanish (Spain)', lang: 'es-ES', localService: true },
+      { name: 'Google español de Estados Unidos', lang: 'es-US', localService: false },
+      { name: 'Microsoft Dalia Online (Natural) - Spanish (Mexico)', lang: 'es-MX', localService: false },
+      { name: 'Microsoft Aria Online (Natural) - English (US)', lang: 'en-US', localService: false }
+    ];
+    expect(pickBestVoice(voices, 'es').name).toContain('Dalia');
+    expect(pickBestVoice(voices, 'en').name).toContain('Aria');
+    expect(pickBestVoice([{ name: 'X', lang: 'fr-FR' }], 'es')).toBeNull();
+  });
+});
