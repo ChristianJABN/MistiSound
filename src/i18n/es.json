@@ -520,5 +520,17 @@
   "expMineSent": "Tu experiencia · enviada, pendiente de revisión",
   "expMineLocal": "Tu experiencia · solo en este navegador",
   "expAddYours": "Dejar mi experiencia",
-  "layerPlayingOzone": "Sonando solo la capa ozono: primero 2005–2009 (los primeros años medidos), luego los últimos 5 años."
+  "layerPlayingOzone": "Sonando solo la capa ozono: primero 2005–2009 (los primeros años medidos), luego los últimos 5 años.",
+  "docTitle": "Misti Sound · El sonido de tu fecha en la Tierra",
+  "ariaAudioControls": "Controles de audio (siempre visibles)",
+  "ariaGlobe": "Globo 3D",
+  "ariaHistory": "Tu fecha",
+  "ariaSidePanel": "Panel de información y controles",
+  "ariaResult": "Resultado",
+  "ariaShare": "Compartir",
+  "ariaTimeline": "Línea de tiempo",
+  "ariaPointInfo": "Información del punto seleccionado",
+  "ariaLegend": "Leyenda de anomalía",
+  "ariaCompare": "Comparar A/B",
+  "ariaEicResources": "Recursos EIC"
 }

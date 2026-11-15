@@ -4,7 +4,9 @@ import en from './en.json';
 const dictionaries = { es, en };
 
 const STORAGE_KEY = 'earth-jukebox-lang';
-const DEFAULT_LANG = 'es';
+// Misti Sound se presenta en ingles por defecto (NASA Space Apps, jurado
+// internacional); ES queda a un clic y se recuerda si la persona lo elige.
+const DEFAULT_LANG = 'en';
 
 export function getStoredLang() {
   try {

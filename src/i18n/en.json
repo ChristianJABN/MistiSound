@@ -520,5 +520,17 @@
   "expMineSent": "Your experience · sent, pending review",
   "expMineLocal": "Your experience · only in this browser",
   "expAddYours": "Leave my experience",
-  "layerPlayingOzone": "Playing only the ozone layer: first 2005–2009 (the first measured years), then the last 5 years."
+  "layerPlayingOzone": "Playing only the ozone layer: first 2005–2009 (the first measured years), then the last 5 years.",
+  "docTitle": "Misti Sound · The sound of your date on Earth",
+  "ariaAudioControls": "Audio controls (always visible)",
+  "ariaGlobe": "3D globe",
+  "ariaHistory": "Your date",
+  "ariaSidePanel": "Information and controls panel",
+  "ariaResult": "Result",
+  "ariaShare": "Share",
+  "ariaTimeline": "Timeline",
+  "ariaPointInfo": "Selected point information",
+  "ariaLegend": "Anomaly legend",
+  "ariaCompare": "Compare A/B",
+  "ariaEicResources": "EIC resources"
 }
