@@ -2,7 +2,7 @@
 // referencia): la altura de cada pico sale del espectro REAL del bus de audio
 // de la app (Tone.Analyser 'fft'). En reposo dibuja un anillo tenue que
 // respira. Solo dibuja; el bucle lo maneja quien lo usa.
-export function createSoundRing(canvas, { colors = ['#ffb35c', '#ff5a1f'], spikes = 96 } = {}) {
+export function createSoundRing(canvas, { colors = ['#ffb35c', '#ff5a1f'], spikes = 132 } = {}) {
   const ctx = canvas.getContext('2d');
   let w = 0;
   let h = 0;
@@ -23,20 +23,23 @@ export function createSoundRing(canvas, { colors = ['#ffb35c', '#ff5a1f'], spike
     ctx.clearRect(0, 0, w, h);
     const cx = w / 2;
     const cy = h / 2;
-    const base = Math.min(w, h) * 0.36;
-    const maxLen = Math.min(w, h) * 0.14;
+    const base = Math.min(w, h) * 0.345;
+    const maxLen = Math.min(w, h) * 0.15;
     const grad = ctx.createRadialGradient(cx, cy, base * 0.9, cx, cy, base + maxLen);
     grad.addColorStop(0, colors[0]);
     grad.addColorStop(1, colors[1]);
     ctx.strokeStyle = grad;
     ctx.lineCap = 'round';
     ctx.lineWidth = Math.max(1.5, (Math.PI * 2 * base) / spikes / 2.4);
-    ctx.globalAlpha = active ? 0.95 : 0.35;
+    ctx.globalAlpha = active ? 0.95 : 0.5;
+    ctx.shadowColor = colors[1];
+    ctx.shadowBlur = (active ? 10 : 5) * dpr;
     for (let i = 0; i < spikes; i += 1) {
       // Espejo para que el anillo sea simetrico (graves arriba y abajo).
       const k = i < spikes / 2 ? i : spikes - 1 - i;
       const idx = Math.floor((k / (spikes / 2)) * (bins.length * 0.7));
-      const v = active ? bins[idx] ?? 0 : 0.12 + 0.08 * Math.sin(time * 1.4 + i * 0.35);
+      const idle = 0.16 + 0.1 * Math.sin(time * 1.4 + i * 0.35) + 0.08 * Math.sin(time * 2.3 - i * 0.9);
+      const v = active ? Math.max(bins[idx] ?? 0, idle * 0.6) : idle;
       const len = 2 + v * maxLen;
       const a = (i / spikes) * Math.PI * 2 - Math.PI / 2;
       const c = Math.cos(a);
@@ -47,6 +50,7 @@ export function createSoundRing(canvas, { colors = ['#ffb35c', '#ff5a1f'], spike
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
   }
 
   return { draw, dispose: () => ro.disconnect() };

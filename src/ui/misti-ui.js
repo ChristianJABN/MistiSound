@@ -295,19 +295,42 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
   let ozoneTex = null;
   const co2Host = $('sphere-co2');
   const ozHost = $('sphere-ozone');
+  const tex = (name) => `${import.meta.env.BASE_URL}images/layers/${name}`;
   const co2Sphere = co2Host
-    ? createEffectSphere(co2Host, { rim: [1, 0.55, 0.2], halo: [1, 0.45, 0.15], brightness: 2.0, contrast: 1.3, saturation: 1.5, tint: [1, 0.72, 0.5], tintMix: 0.2, starColor: [1, 0.62, 0.22] })
+    ? createEffectSphere(co2Host, {
+      style: 'co2', dayUrl: tex('earth-day.jpg'), nightUrl: tex('earth-night.jpg'),
+      rim: [0.9, 0.38, 0.08], halo: [1, 0.45, 0.12], haloSize: 1.2, haloStrength: 0.32, brightness: 1.2, contrast: 1.1, starColor: [1, 0.7, 0.3]
+    })
     : null;
   const ozoneSphere = ozHost
-    ? createEffectSphere(ozHost, { rim: [0.6, 0.85, 1], halo: [0.6, 0.45, 1], brightness: 0.95, contrast: 1.3, saturation: 1.3, ramp: 0.9, rampColors: [[0.1, 0.06, 0.4], [0.12, 0.5, 0.95], [0.7, 0.4, 1]], starColor: [0.7, 0.95, 1] })
+    ? createEffectSphere(ozHost, {
+      style: 'ozone', dayUrl: tex('earth-day.jpg'),
+      rim: [0.5, 0.75, 1], halo: [0.55, 0.45, 1], haloSize: 1.22, haloStrength: 0.4, brightness: 1.1, contrast: 1.05,
+      rampColors: [[0.12, 0.08, 0.45], [0.15, 0.6, 1], [0.75, 0.45, 1]], starColor: [0.7, 0.95, 1],
+      shells: [
+        { r: 1.1, colorA: [0.3, 0.9, 1], colorB: [0.7, 0.4, 1], strength: 0.75, tilt: 0.3, speed: 0.06 },
+        { r: 1.2, colorA: [0.55, 0.5, 1], colorB: [0.3, 0.8, 1], strength: 0.6, tilt: -0.6, speed: -0.045 },
+        { r: 1.32, colorA: [0.75, 0.4, 1], colorB: [0.4, 0.95, 0.9], strength: 0.45, tilt: 1.1, speed: 0.035 }
+      ]
+    })
     : null;
+  // Temperatura: capa de fuego animada sobre el globo Cesium (vista natural).
+  const tempStage = document.querySelector('.layer-temp .globe-stage');
+  let fireSphere = null;
+  if (tempStage) {
+    const fireHost = document.createElement('div');
+    fireHost.className = 'sphere-host temp-fire';
+    fireHost.setAttribute('aria-hidden', 'true');
+    tempStage.append(fireHost);
+    fireSphere = createEffectSphere(fireHost, { style: 'temp', home: 5.28, rim: [0, 0, 0], haloStrength: 0, brightness: 1.05, contrast: 1.1 });
+  }
   if (co2Sphere) {
     const img = new Image();
     img.onload = () => {
       co2Sphere.setTexture(img);
       co2Sphere.setStars(hotspotsFromImage(img), 0.5);
     };
-    img.src = `${import.meta.env.BASE_URL}images/layers/co2-sphere.jpg`;
+    img.src = tex('co2-sphere.jpg');
   }
   const ringColors = { co2: ['#ffcf7a', '#ff5a1f'], ozone: ['#7af6ff', '#a66bff'], temp: ['#ffe27a', '#ff3d1f'] };
   const rings = {};
@@ -315,7 +338,7 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
     const c = card.querySelector('.sound-ring');
     if (c) rings[card.dataset.layer] = createSoundRing(c, { colors: ringColors[card.dataset.layer] });
   }
-  const spheres = { co2: co2Sphere, ozone: ozoneSphere };
+  const spheres = { co2: co2Sphere, ozone: ozoneSphere, temp: fireSphere };
   let analyser = null;
   let loop = 0;
   let revealAt = performance.now();

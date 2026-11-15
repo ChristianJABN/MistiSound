@@ -15,8 +15,9 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
   const listeners = new AbortController();
   const listen = (target, type, fn, opts = {}) => target.addEventListener(type, fn, { ...opts, signal: listeners.signal });
-  // Misti Sound: la tarjeta Temperatura muestra los colores de anomalia por defecto.
-  const viewModes = { history: true, explore: true, peru: false, accessible: true, dj: false };
+  // Misti Sound: la tarjeta Temperatura arranca en vista natural (planeta en llamas);
+  // "Anomalias" muestra los colores reales de GISTEMP.
+  const viewModes = { history: false, explore: true, peru: false, accessible: true, dj: false };
   const headings = {
     history: ['historyTitle', 'auroraIntro'], explore: ['auroraExploreTitle', 'auroraExploreIntro'],
     peru: ['auroraPeruTitle', 'auroraPeruIntro'], accessible: ['auroraAccessibleTitle', 'auroraAccessibleIntro'],
