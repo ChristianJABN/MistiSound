@@ -89,7 +89,11 @@ export function drawStoryCard(canvas, result, lang) {
   box(560, recentLabel(result, lang), result.b.value, '#f6a46b');
 
   // Barras: decada de 1950 (promedio) + cada uno de los ultimos 5 anios.
-  const bars = [{ label: t(lang, 'storyCardPastBar'), value: result.a.value }, ...result.b.series.map((s) => ({ label: String(s.year), value: s.value }))];
+  const bars = [
+    { label: t(lang, 'storyCardPastBar'), value: result.a.value },
+    ...(result.n ? [{ label: String(result.n.firstYear), value: result.n.value }] : []),
+    ...result.b.series.map((s) => ({ label: String(s.year), value: s.value }))
+  ];
   const base = 1010;
   const scale = 110; // px por grado
   ctx.strokeStyle = '#ffffff40';

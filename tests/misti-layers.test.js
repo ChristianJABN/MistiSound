@@ -107,7 +107,10 @@ describe('Las 3 capas en sonido', () => {
   it('storyInputs une temperatura, CO2 y ozono por anio', () => {
     const result = { a: { value: 0 }, b: { series: [{ year: 2025, value: 1.2 }] } };
     const layers = { co2: { past: { mean: 312 }, recent: { series: [{ year: 2025, ppm: 425 }] } }, ozone: { past: { mean: 260 }, recent: { series: [{ year: 2025, du: 255 }] } } };
-    expect(storyInputs(result, layers)).toEqual({ before: { temp: 0, co2: 312, ozone: 260 }, years: [{ year: 2025, temp: 1.2, co2: 425, ozone: 255 }], pastTemp: 0 });
+    expect(storyInputs(result, layers)).toEqual({ before: { temp: 0, co2: 312, ozone: 260 }, birth: null, years: [{ year: 2025, temp: 1.2, co2: 425, ozone: 255 }], pastTemp: 0 });
+    const withBirth = { ...result, n: { value: 0.4 } };
+    const layersBirth = { ...layers, co2: { ...layers.co2, birth: { ppm: 354 } }, ozone: { ...layers.ozone, birth: null } };
+    expect(storyInputs(withBirth, layersBirth).birth).toEqual({ temp: 0.4, co2: 354, ozone: null });
   });
 });
 
@@ -135,5 +138,30 @@ describe('PDF de la Guia Docente', () => {
 describe('textos Misti Sound', () => {
   it('ES y EN tienen las mismas claves', () => {
     expect(Object.keys(es).sort()).toEqual(Object.keys(en).sort());
+  });
+});
+
+describe('Misti Sound v2: capas del anio de nacimiento', () => {
+  it('CO2: serie anual desde 1950 y valor del anio de nacimiento (anual antes de 1979)', () => {
+    const r = co2ForStory(CO2, { month: 8, pastYears: [1950], recentYears: [2025], birthYear: 1965 });
+    expect(r.history[0]).toEqual({ year: 1950, ppm: 311.3 });
+    expect(r.history.at(-1).year).toBeGreaterThanOrEqual(2026);
+    expect(r.birth).toMatchObject({ year: 1965, annual: true });
+    expect(r.birth.ppm).toBeGreaterThan(318);
+    const r2 = co2ForStory(CO2, { month: 8, pastYears: [1950], recentYears: [2025], birthYear: 1995 });
+    expect(r2.birth.annual).toBe(false);
+    expect(r2.birth.ppm).toBeGreaterThan(355);
+  });
+
+  it('ozono del anio de nacimiento solo si es 2005 o posterior', async () => {
+    const XML = '<ColorMapEntry rgb="10,20,30" transparent="false" sourceValue="[250.00,252.50)" value="[250.00,252.50)" ref="1"/>';
+    const cmap = parseColormap(XML);
+    const img = { width: 512, height: 512, data: new Uint8ClampedArray(512 * 512 * 4).map((_, i) => [10, 20, 30, 255][i % 4]) };
+    const loadImage = async () => img;
+    const today = new Date(Date.UTC(2026, 10, 14));
+    const old = await ozoneForStory({ lat: 0, lon: 0, month: 8, recentYears: [2025], birthYear: 1995, colormap: cmap, loadImage, today });
+    expect(old.birth).toEqual({ year: 1995, du: null, measured: false });
+    const recent = await ozoneForStory({ lat: 0, lon: 0, month: 8, recentYears: [2025], birthYear: 2010, colormap: cmap, loadImage, today });
+    expect(recent.birth).toEqual({ year: 2010, du: 251, measured: true });
   });
 });

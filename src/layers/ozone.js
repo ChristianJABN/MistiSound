@@ -109,15 +109,19 @@ async function yearValue({ year, month, lat, lon, colormap, loadImage, today }) 
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
 }
 
-export async function ozoneForStory({ lat, lon, month, recentYears, colormap, loadImage, today = new Date() }) {
+export async function ozoneForStory({ lat, lon, month, recentYears, birthYear = null, colormap, loadImage, today = new Date() }) {
   const series = async (years) =>
     Promise.all(years.map(async (year) => ({ year, du: await yearValue({ year, month, lat, lon, colormap, loadImage, today }) })));
-  const [past, recent] = await Promise.all([series(OZONE_PAST_YEARS), series(recentYears)]);
+  // Tu anio solo tiene ozono si es 2005 o posterior (OMI empieza en oct. 2004).
+  const birthYears = birthYear && birthYear >= 2005 ? [birthYear] : [];
+  const [past, recent, birthSeries] = await Promise.all([series(OZONE_PAST_YEARS), series(recentYears), series(birthYears)]);
   const avg = (s) => {
     const v = s.map((p) => p.du).filter((d) => d !== null);
     return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
   };
+  const birthDu = birthSeries[0]?.du ?? null;
   return {
+    birth: birthYear ? { year: birthYear, du: birthDu === null ? null : Math.round(birthDu), measured: birthYear >= 2005 } : null,
     past: { mean: avg(past), series: past, firstYear: OZONE_PAST_YEARS[0], lastYear: OZONE_PAST_YEARS.at(-1) },
     recent: { mean: avg(recent), series: recent },
     source: 'NASA OMI (Aura) via GIBS'

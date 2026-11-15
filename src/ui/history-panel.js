@@ -68,6 +68,8 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
   const dayInput = $('history-day');
   const viewA = $('history-view-a');
   const viewB = $('history-view-b');
+  const viewN = $('history-view-n');
+  const listenN = $('history-listen-n');
   const imageryEl = $('history-imagery');
   const yearsEl = $('history-years');
   const showReflectionBtn = $('history-show-reflection');
@@ -111,7 +113,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     setText(formError, text);
     const invalid = Boolean(formErrorKey);
     const dateInvalid = invalid && formErrorKey.key !== 'historyErrNoPlace';
-    const yearOnly = formErrorKey && ['storyErrYear', 'historyErrBefore', 'historyErrAfter', 'historyErrNotAvailable'].includes(formErrorKey.key);
+    const yearOnly = formErrorKey && ['storyErrYear', 'storyErrYearEmpty', 'historyErrBefore', 'historyErrAfter', 'historyErrNotAvailable'].includes(formErrorKey.key);
     yearInput.setAttribute('aria-invalid', String(dateInvalid && yearOnly));
     dayInput.setAttribute('aria-invalid', String(dateInvalid && !yearOnly));
   }
@@ -219,7 +221,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       const row = searchCities(catalog.rows, 'Arequipa').items[0];
       if (!row) throw new Error('Demo city missing from catalog');
       setPlace(cityRowToPlace(row));
-      dayInput.value = '15'; monthSelect.value = '8'; yearInput.value = '';
+      dayInput.value = '15'; monthSelect.value = '8'; yearInput.value = '1995';
       lastSearch = null; placeResults.replaceChildren(); setText(placeStatus, '');
       form.requestSubmit();
     } catch {
@@ -296,17 +298,26 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     showFormError(null);
     const label = place ? (place.name ? formatPlaceLabel(place, lang()) : null) : null;
     reflectionOpen = false;
+    // Con todos los campos completos empieza la intro (ver src/ui/flow.js); la
+    // validacion fina (fecha real, datos disponibles) la hace el controlador.
+    if (place && dayInput.value && monthSelect.value && yearInput.value) document.dispatchEvent(new CustomEvent('misti:submit'));
     const outcome = await controller.submitStory({
       place: place ? { lat: place.lat, lon: place.lon, label } : null,
       day: dayInput.value,
       month: monthSelect.value,
-      year: yearInput.value
+      year: yearInput.value,
+      requireYear: true
     });
     if (outcome.reason === 'stale') return;
     if (outcome.ok) {
       focusResultTitle();
-      // "Escuchar mi fecha": el clic del usuario es el gesto que permite sonar.
-      if (audioEngine && !store.get().audio.muted) await withAudio(() => controller.playAuto());
+      // "Escuchar mi fecha": el clic fue el gesto que activo el audio; el relato
+      // empieza cuando se revela el tablero (al terminar la intro).
+      if (audioEngine && !store.get().audio.muted) {
+        const play = () => withAudio(() => controller.playAuto());
+        if (document.documentElement.dataset.stage === 'intro') document.addEventListener('misti:reveal', play, { once: true });
+        else await play();
+      }
       return;
     }
     const keys = {
@@ -314,6 +325,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       empty: ['storyErrEmpty'],
       invalid: ['storyErrInvalid'],
       invalidYear: ['storyErrYear'],
+      emptyYear: ['storyErrYearEmpty'],
       beforeSource: ['historyErrBefore', { min: formatMonthYear(outcome.min ?? firstPeriod, lang()) }],
       afterLatest: ['historyErrAfter', { max: formatMonthYear(outcome.max ?? lastPeriod, lang()) }],
       notAvailable: ['historyErrNotAvailable'],
@@ -338,11 +350,13 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
 
   listenA.addEventListener('click', () => withAudio(() => controller.play('a')));
   listenB.addEventListener('click', () => withAudio(() => controller.play('b')));
+  listenN?.addEventListener('click', () => withAudio(() => controller.play('n')));
   listenAuto.addEventListener('click', () => withAudio(() => controller.playAuto()));
   repeatBtn.addEventListener('click', () => withAudio(() => controller.repeat()));
   stopBtn.addEventListener('click', () => controller.stop());
   viewA.addEventListener('click', () => controller.viewEpoch('a'));
   viewB.addEventListener('click', () => controller.viewEpoch('b'));
+  viewN?.addEventListener('click', () => controller.viewEpoch('n'));
   showReflectionBtn.addEventListener('click', () => {
     reflectionOpen = true;
     render(store.get());
@@ -395,6 +409,18 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
         dayInput.appendChild(opt);
       }
     }
+    if (yearInput.tagName === 'SELECT' && yearInput.options.length === 0 && firstPeriod && lastPeriod) {
+      const blankY = document.createElement('option');
+      blankY.value = '';
+      blankY.textContent = '—';
+      yearInput.appendChild(blankY);
+      for (let y = Number(lastPeriod.slice(0, 4)); y >= Number(firstPeriod.slice(0, 4)); y -= 1) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearInput.appendChild(opt);
+      }
+    }
     const previous = monthSelect.value;
     monthSelect.replaceChildren();
     const blank = document.createElement('option');
@@ -424,8 +450,12 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
       setText($('moment-a-title'), t(l, 'momentBeforeTitle', { first: 1950 }));
       setText($('moment-b-title'), t(l, 'momentAfterTitle', { first: '…', last: '…' }));
       setText(cardDelta, '');
+      setText($('history-card-n-value'), '—');
+      setText($('history-card-n-period'), t(l, 'momentBirthTag', { year: yearInput.value || '…' }));
+      setText($('moment-n-title'), t(l, 'momentBirthTitle', { year: yearInput.value || '…' }));
       listenA.disabled = true;
       listenB.disabled = true;
+      if (listenN) listenN.disabled = true;
       return;
     }
 
@@ -464,6 +494,23 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     setText($('moment-a-title'), story ? t(l, 'momentBeforeTitle', { first: a.firstYear }) : periodA);
     setText($('moment-b-title'), story ? t(l, 'momentAfterTitle', { first: b.firstYear, last: b.lastYear }) : periodB);
     setText($('m-b-text'), t(l, result.delta !== null && result.delta < 0 ? 'momentAfterTextCool' : 'momentAfterText'));
+    const n = result.n;
+    const birthRow = document.querySelector('.moment-birth');
+    if (birthRow) birthRow.hidden = !n;
+    if (n) {
+      setText($('history-card-n-period'), t(l, 'momentBirthTag', { year: n.firstYear }));
+      setText($('moment-n-title'), t(l, 'momentBirthTitle', { year: n.firstYear }));
+      setText($('history-card-n-value'), deg(n.value));
+    }
+    if (listenN) {
+      listenN.disabled = state.audio.muted || !n || n.value === null;
+      listenN.setAttribute('aria-label', t(l, 'listenBirthAria', { year: n?.firstYear ?? '' }));
+    }
+    if (viewN) {
+      viewN.hidden = !n;
+      setText(viewN, n ? t(l, 'storyViewBirth', { year: n.firstYear }) : '');
+      viewN.setAttribute('aria-pressed', String(h.viewing === 'n'));
+    }
     setText(
       cardDelta,
       result.delta === null
@@ -525,7 +572,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
 
     listenA.setAttribute('aria-label', t(l, 'historyListenA', { period: periodA }));
     listenB.setAttribute('aria-label', t(l, 'historyListenB', { period: periodB }));
-    setText(listenAuto, t(l, 'historyListenAuto'));
+    listenAuto.setAttribute('aria-label', t(l, 'historyListenAuto'));
     setText(repeatBtn, t(l, 'historyRepeat'));
     setText(stopBtn, t(l, 'historyStop'));
 
@@ -551,7 +598,8 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     else if (h.playing?.phase === 'gap') status = t(l, 'historyPlayingGap');
     else if (h.playing && h.lastPlay === 'mix') status = t(l, 'mixPlaying');
     else if (h.playing && String(h.lastPlay).startsWith('layer:')) {
-      status = t(l, 'layerPlaying', { layer: t(l, `layerName_${h.lastPlay.slice(6)}`) });
+      const layerId = h.lastPlay.slice(6);
+      status = layerId === 'ozone' ? t(l, 'layerPlayingOzone') : t(l, 'layerPlaying', { layer: t(l, `layerName_${layerId}`) });
     } else if (h.playing) {
       const announce = story ? storyAnnouncement(result, h.playing.epoch, l) : epochAnnouncement(result, h.playing.epoch, l);
       status = t(l, 'historyPlayingNow', { announce });
@@ -661,6 +709,7 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     // Relato compartido (1950-MM, ultimo MM): sin dia ni ano (privacidad).
     const isStory = a.startsWith('1950-') && a.slice(5, 7) === b.slice(5, 7);
     yearInput.value = isStory ? '' : a.slice(0, 4);
+    if (yearInput.tagName === 'SELECT' && yearInput.value !== (isStory ? '' : a.slice(0, 4))) yearInput.value = '';
     dayInput.value = '';
     monthSelect.value = String(Number(a.slice(5, 7)));
     showFormError(null);

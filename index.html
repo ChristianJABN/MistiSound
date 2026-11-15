@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-mode="history">
+<html lang="es" data-mode="history" data-stage="onboard">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -27,6 +27,7 @@
         <nav id="section-tabs" aria-label="Secciones / Sections">
           <button type="button" class="tab-btn" data-tab="history" aria-pressed="true" data-i18n="tabYourDate"></button>
           <button type="button" id="guide-open" class="nav-btn" aria-haspopup="dialog" aria-pressed="false" data-i18n="tabGuide"></button>
+          <button type="button" id="exp-open" class="nav-btn" aria-haspopup="dialog" aria-pressed="false" data-i18n="tabExperiences"></button>
         </nav>
         <div class="header-tools"><button type="button" id="aplus-toggle" class="aplus-btn" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="9" cy="7" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M17 8a4 4 0 0 1 0 6M19.5 5.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span aria-hidden="true">A+</span><span class="sr-only" data-i18n="aplusLabel"></span></button><button type="button" id="effects-toggle" class="effects-toggle" aria-pressed="true"><span aria-hidden="true">✧</span><span data-i18n="auroraEffects"></span></button>
         <div id="lang-switch" role="group" aria-label="Idioma / Language">
@@ -73,9 +74,9 @@
                     <label for="history-month" data-i18n="storyMonthLabel"></label>
                     <select id="history-month"></select>
                   </div>
-                  <div class="form-row" hidden>
+                  <div class="form-row">
                     <label for="history-year" data-i18n="storyYearLabel"></label>
-                    <input type="text" id="history-year" placeholder="1990" inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="history-birth-note history-form-error" />
+                    <select id="history-year" aria-describedby="history-birth-note history-form-error"></select>
                   </div>
                 </div>
                 <p id="history-form-error" role="alert"></p>
@@ -93,6 +94,7 @@
                   <div><dt><kbd>1</kbd></dt><dd data-i18n="shortcut1"></dd></div>
                   <div><dt><kbd>2</kbd></dt><dd data-i18n="shortcut2"></dd></div>
                   <div><dt><kbd>3</kbd></dt><dd data-i18n="shortcut3"></dd></div>
+                  <div><dt><kbd>4</kbd></dt><dd data-i18n="shortcut4"></dd></div>
                   <div><dt><kbd>M</kbd></dt><dd data-i18n="shortcutM"></dd></div>
                   <div><dt><kbd>Esc</kbd></dt><dd data-i18n="shortcutEsc"></dd></div>
                 </dl>
@@ -218,21 +220,21 @@
         </aside>
         <section id="layers-column" aria-labelledby="layers-title">
           <h2 id="layers-title" class="sr-only" data-i18n="layersTitle"></h2>
-          <article class="layer-card layer-co2" aria-labelledby="layer-co2-title">
-            <div class="layer-media"><img src="/images/layers/co2-dyamond.jpg" alt="" width="1024" height="576" decoding="async" /></div>
-            <div class="layer-top"><h3 id="layer-co2-title" data-i18n="layerCo2Title"></h3><button type="button" class="layer-listen" data-layer="co2" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
-            <p class="layer-legend"><span aria-hidden="true">✦</span> <span data-i18n="layerCo2Legend"></span></p>
-          </article>
-          <p class="layer-divider" aria-hidden="true"><span>〰</span> <span data-i18n="layersTogether"></span></p>
-          <article class="layer-card layer-ozone" aria-labelledby="layer-oz-title">
-            <div class="layer-media"><canvas id="ozone-canvas" width="1024" height="512" role="img" aria-label=""></canvas></div>
-            <div class="layer-top"><h3 id="layer-oz-title" data-i18n="layerOzoneTitle"></h3><button type="button" class="layer-listen" data-layer="ozone" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
-            <p class="layer-legend"><span aria-hidden="true">〰</span> <span data-i18n="layerOzoneLegend"></span></p>
-          </article>
-          <p class="layer-divider" aria-hidden="true"><span>〰</span> <span data-i18n="layersTogether"></span></p>
-          <article class="layer-card layer-temp" aria-labelledby="layer-temp-title">
-            <div class="layer-media layer-globe">
-            <section id="globe-section" aria-label="Globo 3D">
+          <div class="globe-row">
+            <article class="globe-card layer-co2" data-layer="co2" aria-labelledby="layer-co2-title">
+              <div class="globe-head"><h3 id="layer-co2-title" data-i18n="layerCo2Title"></h3><button type="button" class="layer-listen" data-layer="co2" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+              <div class="globe-stage"><canvas class="sound-ring" aria-hidden="true"></canvas><div class="sphere-host" id="sphere-co2" role="img" data-i18n-aria="layerCo2Alt"></div></div>
+              <p class="layer-legend"><span aria-hidden="true">✦</span> <span data-i18n="layerCo2Legend"></span></p>
+            </article>
+            <article class="globe-card layer-ozone" data-layer="ozone" aria-labelledby="layer-oz-title">
+              <div class="globe-head"><h3 id="layer-oz-title" data-i18n="layerOzoneTitle"></h3><button type="button" class="layer-listen" data-layer="ozone" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+              <div class="globe-stage"><canvas class="sound-ring" aria-hidden="true"></canvas><div class="sphere-host" id="sphere-ozone" role="img" aria-label=""></div><canvas id="ozone-canvas" width="1024" height="512" hidden></canvas></div>
+              <p class="layer-legend"><span aria-hidden="true">〰</span> <span data-i18n="layerOzoneLegend"></span></p>
+            </article>
+            <article class="globe-card layer-temp" data-layer="temp" aria-labelledby="layer-temp-title">
+              <div class="globe-head"><h3 id="layer-temp-title" data-i18n="layerTempTitle"></h3><button type="button" class="layer-listen" data-layer="temp" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
+              <div class="globe-stage layer-globe"><canvas class="sound-ring" aria-hidden="true"></canvas>
+                <section id="globe-section" aria-label="Globo 3D">
               <div class="globe-aura" aria-hidden="true"></div>
               <canvas id="orbit-waves" aria-hidden="true"></canvas>
               <div id="globe-container"></div>
@@ -251,59 +253,75 @@
                 <p data-i18n="gibsError"></p>
               </div>
             </section>
-            </div>
-            <div class="layer-top"><h3 id="layer-temp-title" data-i18n="layerTempTitle"></h3><button type="button" class="layer-listen" data-layer="temp" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
-            <p class="layer-legend"><span aria-hidden="true">♥</span> <span data-i18n="layerTempLegend"></span></p>
-          </article>
+              </div>
+              <p class="layer-legend"><span aria-hidden="true">♥</span> <span data-i18n="layerTempLegend"></span></p>
+            </article>
+          </div>
+          <div class="chart-row">
+            <article class="chart-card chart-co2"><h3 data-i18n="chartCo2Title"></h3><p class="chart-sub" id="chart-co2-sub"></p><canvas id="chart-co2" width="560" height="260" role="img" aria-label=""></canvas></article>
+            <article class="chart-card chart-ozone"><h3 data-i18n="chartOzoneTitle"></h3><p class="chart-sub" id="chart-ozone-sub"></p><canvas id="chart-ozone" width="560" height="260" role="img" aria-label=""></canvas></article>
+            <article class="chart-card chart-temp"><h3 data-i18n="chartTempTitle"></h3><p class="chart-big" id="chart-temp-big"></p><canvas id="chart-temp" width="560" height="260" role="img" aria-label=""></canvas></article>
+          </div>
         </section>
 
         <aside id="history-stage" aria-labelledby="stage-title">
-          <div class="panel-heading result-heading"><span class="step-badge violet-badge" aria-hidden="true">02</span><div><p class="eyebrow" data-i18n="auroraTwoMoments"></p><h2 id="stage-title" class="stage-title" data-i18n="auroraListenChange"></h2></div></div>
-          <h3 id="history-result-title" class="sr-only" tabindex="-1"></h3>
-          <p id="history-summary" class="sr-only"></p>
-          <div id="history-compare">
-            <article class="moment moment-before compare-before" aria-labelledby="moment-a-title">
-              <span class="moment-key" aria-hidden="true">[1]</span>
-              <p class="moment-tag" id="history-card-a-period"></p>
-              <h3 id="moment-a-title" data-i18n="momentBeforeTitle"></h3>
-              <dl class="metrics">
-                <div><dt data-i18n="metricTemp"></dt><dd id="history-card-a-value">—</dd></div>
-                <div><dt data-i18n="metricCo2"></dt><dd id="m-a-co2">—</dd></div>
-                <div><dt data-i18n="metricOzone"></dt><dd id="m-a-oz">—</dd></div>
-              </dl>
-              <div class="moment-play"><button type="button" id="history-listen-a" class="play-round" disabled><span aria-hidden="true">▶</span></button><p id="m-a-text" data-i18n="momentBeforeText"></p></div>
-            </article>
-            <article class="moment moment-after compare-after" aria-labelledby="moment-b-title">
-              <span class="moment-key" aria-hidden="true">[2]</span>
-              <p class="moment-tag" id="history-card-b-period"></p>
-              <div class="moment-head"><h3 id="moment-b-title" data-i18n="momentAfterTitle"></h3><p id="history-card-delta" class="moment-delta"></p></div>
-              <dl class="metrics">
-                <div><dt data-i18n="metricTemp"></dt><dd id="history-card-b-value">—</dd></div>
-                <div><dt data-i18n="metricCo2"></dt><dd id="m-b-co2">—</dd></div>
-                <div><dt data-i18n="metricOzone"></dt><dd id="m-b-oz">—</dd></div>
-              </dl>
-              <div class="moment-play"><button type="button" id="history-listen-b" class="play-round" disabled><span aria-hidden="true">▶</span></button><p id="m-b-text" data-i18n="momentAfterText"></p></div>
-            </article>
+          <section class="sound-panel" aria-labelledby="stage-title">
+            <p class="eyebrow" data-i18n="auroraTwoMoments"></p>
+            <h2 id="stage-title" class="stage-title" data-i18n="soundPanelTitle"></h2>
+            <h3 id="history-result-title" class="sr-only" tabindex="-1"></h3>
+            <p id="history-summary" class="sr-only"></p>
+            <ol id="history-compare" class="moment-list">
+              <li class="moment moment-before compare-before">
+                <span class="moment-num" aria-hidden="true">01</span>
+                <div class="moment-body"><p class="moment-tag" id="history-card-a-period"></p><h3 id="moment-a-title"></h3>
+                  <p class="moment-values"><span id="history-card-a-value">—</span> · <span id="m-a-co2">—</span> · <span id="m-a-oz">—</span></p></div>
+                <button type="button" id="history-listen-a" class="play-mini" disabled><span aria-hidden="true">▶</span></button>
+              </li>
+              <li class="moment moment-birth">
+                <span class="moment-num" aria-hidden="true">02</span>
+                <div class="moment-body"><p class="moment-tag" id="history-card-n-period"></p><h3 id="moment-n-title"></h3>
+                  <p class="moment-values"><span id="history-card-n-value">—</span> · <span id="m-n-co2">—</span> · <span id="m-n-oz">—</span></p></div>
+                <button type="button" id="history-listen-n" class="play-mini" disabled><span aria-hidden="true">▶</span></button>
+              </li>
+              <li class="moment moment-after compare-after">
+                <span class="moment-num" aria-hidden="true">03</span>
+                <div class="moment-body"><p class="moment-tag" id="history-card-b-period"></p><h3 id="moment-b-title"></h3>
+                  <p class="moment-values"><span id="history-card-b-value">—</span> · <span id="m-b-co2">—</span> · <span id="m-b-oz">—</span></p></div>
+                <button type="button" id="history-listen-b" class="play-mini" disabled><span aria-hidden="true">▶</span></button>
+              </li>
+            </ol>
+            <div class="big-play-row">
+              <button type="button" id="history-listen-auto" class="big-play"><span aria-hidden="true">▶</span><span class="sr-only" data-i18n="historyListenAuto"></span></button>
+              <button type="button" id="history-stop" class="secondary-btn"></button>
+              <button type="button" id="history-mix" class="mix-btn" disabled><span data-i18n="mixBtn"></span></button>
+            </div>
+            <p id="history-play-status" role="status"></p>
+            <p id="history-audio-hint"></p>
+          </section>
+          <section class="conclusions" aria-labelledby="concl-title">
+            <h2 id="concl-title" data-i18n="conclusionsTitle"></h2>
+            <dl id="conclusions-list">
+              <div><dt id="concl-temp-v">—</dt><dd data-i18n="conclTemp"></dd></div>
+              <div><dt id="concl-co2-v">—</dt><dd data-i18n="conclCo2"></dd></div>
+              <div><dt id="concl-oz-v">—</dt><dd data-i18n="conclOzone"></dd></div>
+            </dl>
+            <p id="history-card-delta" class="moment-delta"></p>
+            <p id="m-b-text" class="concl-text" data-i18n="momentAfterText"></p>
             <p id="metrics-note" class="field-help"></p>
-            <button type="button" id="history-mix" class="mix-btn" disabled><span class="moment-key" aria-hidden="true">[3]</span><span data-i18n="mixBtn"></span></button>
             <div class="share-row">
               <button type="button" id="share-instagram" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span data-i18n="shareInstagram"></span></button>
               <button type="button" id="share-tiktok" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.1c-1.5 0-2.8-.4-4-1.2V15a6 6 0 1 1-6-6v3.2a2.8 2.8 0 1 0 2.8 2.8V3h3.2z"/></svg><span data-i18n="shareTiktok"></span></button>
             </div>
+            <button type="button" id="exp-open-inline" class="link-btn" data-i18n="expAddYours"></button>
             <p id="history-card-status" role="status"></p>
-          </div>
+          </section>
           <section id="history-result" hidden aria-label="Resultado">
             <ol id="history-years" class="year-beats" aria-label=""></ol>
-            <p id="history-play-status" role="status"></p>
-            <p id="history-audio-hint"></p>
-            <div id="history-actions" class="button-row">
-              <button type="button" id="history-listen-auto" class="secondary-btn"></button>
-              <button type="button" id="history-stop" class="secondary-btn"></button>
-            </div>
             <details class="listening-options"><summary data-i18n="auroraListeningOptions"></summary>
               <div id="history-view" role="group" aria-labelledby="history-view-label">
                 <p id="history-view-label" class="eyebrow" data-i18n="storyViewLabel"></p>
                 <button type="button" id="history-view-a" class="secondary-btn" aria-pressed="false"></button>
+                <button type="button" id="history-view-n" class="secondary-btn" aria-pressed="false"></button>
                 <button type="button" id="history-view-b" class="secondary-btn" aria-pressed="false"></button>
                 <p id="history-imagery" class="field-help"></p>
               </div>
@@ -376,6 +394,44 @@
         <span id="period-status" aria-live="polite"></span>
       </footer></div>
     </div>
+    <div id="intro-overlay" hidden aria-live="polite">
+      <canvas id="intro-canvas" aria-hidden="true"></canvas>
+      <p id="intro-text" class="intro-text"></p>
+      <button type="button" id="intro-skip" class="link-btn" data-i18n="introSkip"></button>
+    </div>
+    <dialog id="exp-dialog" aria-labelledby="exp-title">
+      <div class="exp-body">
+        <div class="exp-head"><h2 id="exp-title" data-i18n="expTitle"></h2><button type="button" id="exp-close" class="guide-btn guide-btn-solid" data-i18n="guideClose"></button></div>
+        <p data-i18n="expIntro"></p>
+        <div class="exp-grid">
+          <form id="exp-form" name="experiencias" method="POST" data-netlify="true" netlify-honeypot="bot-field" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="form-name" value="experiencias" />
+            <p hidden><label>No llenar: <input name="bot-field" /></label></p>
+            <h3 data-i18n="expShareTitle"></h3>
+            <div class="form-row"><label for="exp-name" data-i18n="expName"></label><input id="exp-name" name="nombre" maxlength="60" autocomplete="nickname" /></div>
+            <div class="form-row"><label for="exp-comment" data-i18n="expComment"></label><textarea id="exp-comment" name="comentario" rows="3" maxlength="600" required></textarea></div>
+            <div class="form-row"><label for="exp-photo" data-i18n="expPhoto"></label><input id="exp-photo" name="foto" type="file" accept="image/*" /></div>
+            <div class="exp-melody">
+              <button type="button" id="exp-record" class="secondary-btn" data-i18n="expRecord"></button>
+              <audio id="exp-audio" controls hidden></audio>
+              <p id="exp-record-status" class="field-help" role="status"></p>
+            </div>
+            <input type="file" name="melodia" id="exp-melody-file" hidden />
+            <input type="hidden" name="lugar" id="exp-place" />
+            <input type="hidden" name="fecha" id="exp-date" />
+            <input type="hidden" name="resumen" id="exp-summary" />
+            <div class="form-row check-row"><input type="checkbox" id="exp-consent" name="consentimiento" value="si" required /><label for="exp-consent" data-i18n="expConsent"></label></div>
+            <button type="submit" id="exp-submit" class="action-btn" data-i18n="expSubmit"></button>
+            <p id="exp-status" role="status"></p>
+          </form>
+          <section aria-labelledby="exp-wall-title">
+            <h3 id="exp-wall-title" data-i18n="expWallTitle"></h3>
+            <ul id="exp-wall" class="exp-wall"></ul>
+            <p class="field-help" data-i18n="expWallNote"></p>
+          </section>
+        </div>
+      </div>
+    </dialog>
     <dialog id="guide-dialog" aria-labelledby="guide-title">
       <div class="guide-body">
         <h2 id="guide-title" data-i18n="guideTitle"></h2>

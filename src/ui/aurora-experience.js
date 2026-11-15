@@ -214,7 +214,7 @@ export function createAuroraExperience({ store, audioEngine, onOverlayVisibility
     if (empty) empty.hidden = history.status === 'ready';
     $('history-form').setAttribute('aria-busy', String(history.status === 'loading'));
     $('history-submit').disabled = history.status === 'loading';
-    for (const [selector, epoch] of [['.moment-before', 'a'], ['.moment-after', 'b']]) {
+    for (const [selector, epoch] of [['.moment-before', 'a'], ['.moment-birth', 'n'], ['.moment-after', 'b']]) {
       const playingMix = history.lastPlay === 'mix' || String(history.lastPlay).startsWith('layer:');
       document.querySelector(selector)?.classList.toggle('is-playing',
         Boolean(activeTab === 'history' && !audio.muted && history.playing?.phase === 'music' && (playingMix || history.playing?.epoch === epoch)));

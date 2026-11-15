@@ -15,13 +15,14 @@ export function storyInputs(result, layers) {
   const co2 = layers?.co2;
   const oz = layers?.ozone;
   const before = { temp: result.a.value, co2: co2?.past.mean ?? null, ozone: oz?.past.mean ?? null };
+  const birth = result.n ? { temp: result.n.value, co2: co2?.birth?.ppm ?? null, ozone: oz?.birth?.du ?? null } : null;
   const years = result.b.series.map((s) => ({
     year: s.year,
     temp: s.value,
     co2: co2?.recent.series.find((c) => c.year === s.year)?.ppm ?? null,
     ozone: oz?.recent.series.find((o) => o.year === s.year)?.du ?? null
   }));
-  return { before, years, pastTemp: result.a.value };
+  return { before, birth, years, pastTemp: result.a.value };
 }
 
 export class StoryPlayer {
@@ -64,7 +65,8 @@ export class StoryPlayer {
       // Resultado clasico (enlace antiguo): solo la melodia de temperatura.
       return planPast(this.value);
     }
-    const { before, years, pastTemp } = storyInputs(s.result, s.layers);
+    const { before, birth, years, pastTemp } = storyInputs(s.result, s.layers);
+    if (s.which === 'n' && !s.mode) return birth ? planBefore(birth, { seed: 'birth' }) : null;
     if (s.mode === 'mix') return planMix(before, years, pastTemp);
     if (s.mode === 'solo') return planSolo(s.layer, before, years, pastTemp);
     if (s.which === 'b') return planNow(years, pastTemp);

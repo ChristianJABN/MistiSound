@@ -20,7 +20,7 @@ const mean = (xs) => {
  * Si un mes aun no esta publicado se usa el ultimo mes disponible de ese anio
  * y se marca `approx`.
  */
-export function co2ForStory(data, { month, pastYears, recentYears }) {
+export function co2ForStory(data, { month, pastYears, recentYears, birthYear = null }) {
   const annual = data.annual_pre1979.values;
   const monthly = data.monthly_from_1979.values;
   const past = pastYears.map((y) => ({ year: y, ppm: annual[y] ?? null }));
@@ -32,7 +32,28 @@ export function co2ForStory(data, { month, pastYears, recentYears }) {
     return { year: y, ppm: null, approx: false };
   });
   const round = (v) => (v === null ? null : Math.round(v * 10) / 10);
+  let birth = null;
+  if (birthYear) {
+    const key = `${birthYear}-${String(month).padStart(2, '0')}`;
+    birth = { year: birthYear, ppm: birthYear < 1979 ? annual[birthYear] ?? null : monthly[key] ?? null, annual: birthYear < 1979 };
+  }
+  // Serie anual 1950..ultimo anio (grafico "Historico de CO2"): anual GISS antes
+  // de 1979; promedio de los meses publicados de NOAA despues.
+  const history = [];
+  const lastYear = Number(last.slice(0, 4));
+  for (let y = 1950; y <= lastYear; y += 1) {
+    if (y < 1979) {
+      if (annual[y] != null) history.push({ year: y, ppm: annual[y] });
+      continue;
+    }
+    const vals = Object.entries(monthly)
+      .filter(([k]) => k.startsWith(`${y}-`))
+      .map(([, v]) => v);
+    if (vals.length) history.push({ year: y, ppm: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 });
+  }
   return {
+    birth,
+    history,
     past: { mean: round(mean(past.map((p) => p.ppm))), series: past },
     recent: { mean: round(mean(recent.map((p) => p.ppm))), series: recent },
     scope: 'global'

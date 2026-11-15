@@ -33,9 +33,9 @@ export function createLayersLoader({ store, baseUrl, fetchImpl = (...a) => fetch
     const pastYears = result.a.series.map((s) => s.year);
     const recentYears = result.b.series.map((s) => s.year);
     const [co2, ozone] = await Promise.allSettled([
-      getCo2().then((data) => co2ForStory(data, { month, pastYears, recentYears })),
+      getCo2().then((data) => co2ForStory(data, { month, pastYears, recentYears, birthYear: result.birthday.year })),
       getColormap().then((colormap) =>
-        ozoneForStory({ lat: result.point.lat, lon: result.point.lon, month, recentYears, colormap, loadImage, today: today() })
+        ozoneForStory({ lat: result.point.lat, lon: result.point.lon, month, recentYears, birthYear: result.birthday.year, colormap, loadImage, today: today() })
       )
     ]);
     if (currentKey !== key) return;

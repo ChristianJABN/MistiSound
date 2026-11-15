@@ -139,6 +139,18 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
         series: recentSeries
       },
       birth: birthPeriod ? { period: birthPeriod, year, value: cells.get(birthPeriod) } : null,
+      // Tercer momento (Misti Sound): el mes del cumpleanos en el anio de nacimiento.
+      n: birthPeriod
+        ? {
+            kind: 'birth',
+            period: birthPeriod,
+            value: cells.get(birthPeriod),
+            firstYear: year,
+            lastYear: year,
+            series: [{ period: birthPeriod, year, value: cells.get(birthPeriod) }]
+          }
+        : null,
+      deltaBirth: birthPeriod ? computeDelta(cells.get(birthPeriod), round(recentMean)) : null,
       delta: computeDelta(round(pastMean), round(recentMean)),
       baseline: refDs.baseline_period,
       units: refDs.units,
@@ -221,6 +233,10 @@ export function buildBirthdayStory(result, lang) {
 /** Lo que la voz dice al empezar cada parte (serena en el pasado, urgente en el presente). */
 export function storyAnnouncement(result, which, lang) {
   const month = monthName(result.birthday.month, lang);
+  if (which === 'n') {
+    if (!result.n || result.n.value === null) return t(lang, 'storyBirthMissing', { year: result.birthday.year });
+    return t(lang, 'storyAnnounceBirth', { month, year: result.n.firstYear, z: deg(result.n.value) });
+  }
   if (which === 'a') {
     if (result.a.value === null) return t(lang, 'storyPastMissing', { month, label: pastInline(result, lang) });
     return t(lang, 'storyAnnouncePast', { month, place: place(result), label: pastInline(result, lang), x: deg(result.a.value) });

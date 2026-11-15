@@ -146,12 +146,15 @@ export function createHistoryController({
 
   function handleEnd(which, auto, token) {
     if (token !== playToken) return;
-    if (auto && which === 'a') {
-      patch({ playing: { epoch: 'b', auto: true, phase: 'gap' } });
+    const res = store.get().history.result;
+    // Secuencia: 1950 -> tu anio (si hay) -> ultimos 5 anios.
+    const next = auto ? (which === 'a' ? (res?.n && res.n.value !== null ? 'n' : 'b') : which === 'n' ? 'b' : null) : null;
+    if (next) {
+      patch({ playing: { epoch: next, auto: true, phase: 'gap' } });
       gapTimer = setTimeoutFn(() => {
         gapTimer = null;
         if (token !== playToken) return undefined;
-        return beginEpoch('b', true, 'auto').then((started) => {
+        return beginEpoch(next, true, 'auto').then((started) => {
           const failedWithState = ['stale', 'epochError', 'startError'].includes(started.reason);
           if (!started.ok && !failedWithState) patch({ playing: null, ended: true });
           return started;
@@ -163,7 +166,8 @@ export function createHistoryController({
   }
 
   async function play(which) {
-    if (which !== 'a' && which !== 'b') return { ok: false, reason: 'invalid' };
+    if (!['a', 'b', 'n'].includes(which)) return { ok: false, reason: 'invalid' };
+    if (which === 'n' && !store.get().history.result?.n) return { ok: false, reason: 'noData' };
     return beginEpoch(which, false, which);
   }
 
@@ -258,9 +262,10 @@ export function createHistoryController({
    * Compara la decada de 1950 con los ultimos 5 anios del mismo mes. Sin audio:
    * al terminar la consulta el globo muestra el pasado (viewEpoch('a')).
    */
-  async function submitStory({ place, day, month, year }) {
+  async function submitStory({ place, day, month, year, requireYear = false }) {
     const placeCheck = validatePlace(place);
     if (!placeCheck.ok) return { ok: false, reason: 'noPlace', field: 'place' };
+    if (requireYear && String(year ?? '').trim() === '') return { ok: false, reason: 'emptyYear', field: 'birth' };
     const birthday = validateBirthday({ day, month, year }, repository.availablePeriods);
     if (!birthday.ok) return { ...birthday, field: 'birth' };
     return runStory({ point: { lat: place.lat, lon: place.lon }, placeLabel: place.label ?? null, ...birthday });
@@ -283,7 +288,7 @@ export function createHistoryController({
   async function viewEpoch(which) {
     const s = store.get();
     const result = s.history.result;
-    if (!result || s.history.status !== 'ready' || (which !== 'a' && which !== 'b')) return { ok: false, reason: 'noResult' };
+    if (!result || s.history.status !== 'ready' || !['a', 'b', 'n'].includes(which) || !result[which]) return { ok: false, reason: 'noResult' };
     patch({ viewing: which });
     if (!onShowEpoch) return { ok: true };
     try {

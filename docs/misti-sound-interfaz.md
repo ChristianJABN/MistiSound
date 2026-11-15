@@ -98,3 +98,95 @@ Los archivos que genera:
   (`src/ui/pdf-lite.js`, Helvetica con codificación WinAnsi).
 - **Copiar Guía** copia el texto.
 - A+ también agranda el modal.
+
+---
+
+# v2: flujo con fecha completa, esferas con efectos y Experiencias
+
+Basado en los videos de referencia del equipo.
+
+## Flujo (`src/ui/flow.js`)
+
+1. **Inicio:** al principio solo se ve el formulario, centrado sobre la
+   aurora: lugar, **día, mes y año** de nacimiento. Todos son obligatorios.
+2. **Intro:** al pulsar "Escuchar mi fecha" aparecen partículas, ondas y los
+   textos "Descubre cómo sonaba la Tierra el día que naciste…", "Cada rincón
+   del planeta guarda una melodía." y "Sintonizando datos reales…". Dura
+   unos 4 s, mientras cargan los datos. Se puede saltar con Esc.
+3. **Tablero:** se revelan las 3 esferas con un acercamiento de cámara y
+   empieza el relato. El orden es **1950 → tu año → últimos 5 años**.
+
+Los datos son **mensuales** (GISTEMP no cambia por día). El día solo se usa
+para elegir la foto satelital MODIS.
+
+## Tres momentos
+
+| Momento | Temp | CO₂ | Ozono |
+|---|---|---|---|
+| 1950 | promedio 1950–1959 del mes | promedio anual 1950–1959 (GISS) | 2005–2009, el primer período medido |
+| Tu año | el mes de ese año | anual (GISS) si es antes de 1979, mensual (NOAA) desde 1979 | solo si naciste en 2005 o después; si no, "sin medición" |
+| Últimos 5 años | promedio del mes | mismos años | mismos años |
+
+Teclas: **1** = 1950, **2** = tu año, **3** = últimos 5 años, **4** =
+mezclar, **M** = solo voz, **Espacio** = pausar o reproducir.
+
+## Esferas con efectos
+
+- **CO₂ y ozono** son esferas 3D (`src/globe/effect-sphere.js`, three.js):
+  - La textura es una imagen real de NASA: SVS 5436 (EIC) para el CO₂ y el
+    mapa OMI del día del cumpleaños para el ozono.
+  - Tienen brillo y contraste realzados, halo atmosférico y paleta
+    cian-violeta en el ozono.
+  - En el CO₂ hay **estrellas** que titilan justo sobre los focos naranjas
+    de la imagen de NASA.
+  - Giran solas, se arrastran con el mouse, se acercan con la rueda y hacen
+    un acercamiento de cámara al aparecer.
+  - Cuando suena su capa se iluminan, ganan contraste y laten.
+- **Temperatura** sigue siendo el globo Cesium (zoom a la ciudad y fotos
+  Landsat/MODIS). Al revelarse vuela desde el espacio hasta tu ciudad, y
+  tiene resplandor y filtros que reaccionan al sonido.
+- Cada esfera tiene un **anillo de picos** (`src/ui/sound-ring.js`) que
+  sigue el espectro real del audio, como en el video.
+- **Debajo de cada esfera hay un gráfico animado**
+  (`src/ui/layer-charts.js`):
+  - *Histórico de CO₂*: 1950 → hoy, con tu año marcado.
+  - *Evolución del ozono*: ondas más agitadas cuanto menos ozono hay.
+  - *Tendencia de temperatura*: barras de los años 50, tu año (en verde) y
+    los últimos 5 años.
+- Con `prefers-reduced-motion` no hay giro, acercamientos ni animación de
+  intro.
+
+## Compartir
+
+- **Instagram:** solo la imagen (tarjeta PNG de 1080×1350).
+- **TikTok:** video de la **tarjeta estilizada** (mismo diseño) con el
+  sonido real, 1080×1920. El momento que suena se ilumina, un ecualizador
+  sigue el audio y las barras crecen.
+
+## Experiencias (`src/ui/experiences.js`)
+
+Cada persona puede dejar:
+
+- un comentario;
+- una foto, que se reduce a 1280 px en el navegador;
+- su **melodía Misti**, un clip de unos 12 s de la mezcla de sus tiempos
+  grabado del audio real.
+
+El envío pide permiso explícito para publicar. Se manda con **Netlify
+Forms** (formulario `experiencias` en `index.html`).
+
+**Pasos en Netlify (una sola vez):**
+
+1. *Site configuration → Forms → Enable form detection* y volver a publicar.
+2. Los envíos aparecen en *Forms → experiencias*, con la foto y la melodía
+   como archivos adjuntos. Opcional: activar avisos por correo.
+3. Para publicar en el muro una experiencia aprobada, agregarla a
+   `public/data/experiences.json` en `items` con este formato:
+   `{ "name", "place", "comment", "summary", "photo": "<URL>", "audio": "<URL>" }`.
+   Conviene subir antes la foto y el audio a `public/experiences/`.
+
+**Límites del plan gratuito de Netlify:** 100 envíos y 10 MB de archivos
+al mes. Netlify no permite leer los envíos públicamente; por eso el muro
+muestra los aprobados (JSON) y los propios de cada persona (guardados en su
+navegador). En desarrollo local el envío falla a propósito: se guarda en el
+navegador y la app lo avisa.

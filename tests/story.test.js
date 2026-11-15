@@ -239,3 +239,51 @@ describe('controlador: relato de cumpleanos', () => {
     expect(r.birthday).toEqual({ day: null, month: 1, year: null });
   });
 });
+
+describe('Misti Sound v2: tu anio como tercer momento', () => {
+  function harness2() {
+    const store = createStore({ ...createInitialState({ lang: 'es' }), activeTab: 'history', audio: { started: true, muted: false, volumeDb: -12 } });
+    const { repo } = makeRepo();
+    const timers = [];
+    const mixer = { setChannel() {}, setSeed() {}, updateData() {}, setStoryEpoch() {}, start: (o) => (mixer.lastStart = o), stop() {} };
+    const controller = createHistoryController({
+      store,
+      repository: repo,
+      audioEngine: { isStarted: () => true },
+      narrator: { speak: vi.fn(), cancel: vi.fn(), isSupported: () => true },
+      createMixer: () => mixer,
+      onShowEpoch: () => ({ ok: true }),
+      setTimeoutFn: (fn) => timers.push(fn) - 1,
+      clearTimeoutFn: () => {}
+    });
+    return { store, controller, mixer, timers };
+  }
+
+  it('el anio es obligatorio en el formulario nuevo', async () => {
+    const h = harness2();
+    expect(await h.controller.submitStory({ place: { lat: 0, lon: 0 }, day: '14', month: '1', year: '', requireYear: true })).toMatchObject({ reason: 'emptyYear' });
+  });
+
+  it('resultado con epoca n y secuencia 1950 -> tu anio -> ultimos 5', async () => {
+    const h = harness2();
+    await h.controller.submitStory({ place: { lat: 0, lon: 0 }, day: '14', month: '1', year: '1990', requireYear: true });
+    const r = h.store.get().history.result;
+    expect(r.n).toMatchObject({ kind: 'birth', period: '1990-01', value: 0.4, firstYear: 1990 });
+    await h.controller.playAuto();
+    h.mixer.lastStart.onEnd();
+    expect(h.store.get().history.playing).toMatchObject({ epoch: 'n', phase: 'gap' });
+    await h.timers.at(-1)();
+    expect(h.store.get().history.playing).toMatchObject({ epoch: 'n', phase: 'music' });
+    h.mixer.lastStart.onEnd();
+    expect(h.store.get().history.playing).toMatchObject({ epoch: 'b', phase: 'gap' });
+    expect((await h.controller.play('n')).ok).toBe(true);
+    expect(storyAnnouncement(r, 'n', 'es')).toContain('1990');
+  });
+
+  it('sin anio no hay epoca n y play(n) no suena', async () => {
+    const h = harness2();
+    await h.controller.submitStory({ place: { lat: 0, lon: 0 }, day: '14', month: '1' });
+    expect(h.store.get().history.result.n).toBeNull();
+    expect(await h.controller.play('n')).toMatchObject({ ok: false });
+  });
+});

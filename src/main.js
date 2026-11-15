@@ -27,6 +27,8 @@ import { DjMixer } from './audio/mixer.js';
 import { StoryPlayer } from './history/story-player.js';
 import { createMistiUi } from './ui/misti-ui.js';
 import { createLayersLoader } from './layers/layers-loader.js';
+import { createFlow } from './ui/flow.js';
+import { createExperiences } from './ui/experiences.js';
 import { imageryForEpoch, createDatedImageryLayer } from './globe/dated-imagery.js';
 import { createTabs } from './ui/tabs.js';
 import { createShare, resolvePresetPeriod, ALLOWED_DJ_CHANNELS } from './sharing/preset.js';
@@ -498,10 +500,22 @@ async function init() {
   });
   // Misti Sound: capas CO2/ozono, A+, guia docente, atajos y compartir.
   const layersLoader = createLayersLoader({ store, baseUrl: import.meta.env.BASE_URL });
+  const flow = createFlow({ store });
+  const experiences = createExperiences({ store, audioEngine, controller: historyController });
   const mistiUi = createMistiUi({
     store,
     audioEngine,
     controller: historyController,
+    // Al revelar el tablero, el globo de temperatura hace su "juego de camara":
+    // se acerca desde lejos hasta tu lugar.
+    onReveal: (result) => {
+      const viewer = globeHandle?.viewer;
+      if (!viewer || !result?.point) return;
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const { lat, lon } = result.point;
+      viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, 40_000_000) });
+      viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, globeOverviewHeight(viewer)), duration: reduced ? 0 : 2.4 });
+    },
     onLayoutChange: () => {
       const viewer = globeHandle?.viewer;
       if (!viewer) return;
@@ -736,6 +750,8 @@ async function init() {
     historyController.enforce(state);
     layersLoader.sync(state);
     mistiUi.render(state);
+    flow.render(state);
+    experiences.render(state);
     if (datedImageryLayer && (state.activeTab !== 'history' || state.history.status !== 'ready')) clearDatedImagery();
     share.render(state);
     aurora.render(state);
@@ -752,6 +768,7 @@ async function init() {
   jukeboxPanel.render(store.get());
   historyPanel.render(store.get());
   mistiUi.render(store.get());
+  flow.render(store.get());
   share.render(store.get());
 
   await share.applyFromUrlIfPresent();
