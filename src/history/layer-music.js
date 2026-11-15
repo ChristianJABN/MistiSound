@@ -64,12 +64,16 @@ function pick(layers, name) {
 
 const shift = (events, dt, pan = 0) => events.map((e) => ({ ...e, time: e.time + dt, pan }));
 
+// Estilo musical de la temperatura: { planPast, planRecent }. Por defecto el
+// clasico (story-music.js); el piano ambiental vive en story-music-ambient.js.
+const CLASSIC = { planPast, planRecent };
+
 /**
  * Antes. `values` = { temp, co2, ozone } (promedios del pasado). Sin la capa
  * de temperatura dura SOLO_PAST_SECONDS.
  */
-export function planBefore(values, { layers = LAYERS, seed = 'before' } = {}) {
-  const melody = pick(layers, 'temp') ? planPast(values.temp) : null;
+export function planBefore(values, { layers = LAYERS, seed = 'before', music = CLASSIC } = {}) {
+  const melody = pick(layers, 'temp') ? music.planPast(values.temp) : null;
   const duration = melody ? melody.duration : SOLO_PAST_SECONDS;
   const events = [...(melody?.events ?? [])];
   if (pick(layers, 'co2')) events.push(...planStars(values.co2, 0, duration, `${seed}-co2`));
@@ -81,8 +85,8 @@ export function planBefore(values, { layers = LAYERS, seed = 'before' } = {}) {
  * Ahora: un compas por anio. `years` = [{ year, temp, co2, ozone }],
  * `pastTemp` = promedio de los anios 50 (para el tempo y la tension).
  */
-export function planNow(years, pastTemp, { layers = LAYERS, seed = 'now' } = {}) {
-  const temp = planRecent(years.map((y) => ({ year: y.year, value: pick(layers, 'temp') ? y.temp : null })), pastTemp);
+export function planNow(years, pastTemp, { layers = LAYERS, seed = 'now', music = CLASSIC } = {}) {
+  const temp = music.planRecent(years.map((y) => ({ year: y.year, value: pick(layers, 'temp') ? y.temp : null })), pastTemp);
   const events = pick(layers, 'temp') ? [...temp.events] : [];
   temp.bars.forEach((bar, i) => {
     const y = years[i];
@@ -93,10 +97,10 @@ export function planNow(years, pastTemp, { layers = LAYERS, seed = 'now' } = {})
 }
 
 /** Una capa sola: primero antes, luego ahora (con un respiro de 0.6 s). */
-export function planSolo(layer, before, years, pastTemp) {
-  const a = planBefore(before, { layers: [layer] });
+export function planSolo(layer, before, years, pastTemp, { music = CLASSIC } = {}) {
+  const a = planBefore(before, { layers: [layer], music });
   const gap = 0.6;
-  const b = planNow(years, pastTemp, { layers: [layer] });
+  const b = planNow(years, pastTemp, { layers: [layer], music });
   return {
     duration: a.duration + gap + b.duration,
     events: [...a.events, ...shift(b.events, a.duration + gap)],
@@ -106,9 +110,9 @@ export function planSolo(layer, before, years, pastTemp) {
 }
 
 /** Mezclar ambos tiempos: antes a la izquierda, ahora a la derecha, a la vez. */
-export function planMix(before, years, pastTemp) {
-  const a = planBefore(before);
-  const b = planNow(years, pastTemp);
+export function planMix(before, years, pastTemp, { music = CLASSIC } = {}) {
+  const a = planBefore(before, { music });
+  const b = planNow(years, pastTemp, { music });
   return {
     duration: Math.max(a.duration, b.duration),
     events: [...shift(a.events, 0, -MIX_PAN), ...shift(b.events, 0, MIX_PAN)],

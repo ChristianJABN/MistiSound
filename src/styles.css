@@ -739,6 +739,10 @@ html[data-stage='dash'][data-mode='history'] #history-stage{grid-column:2;grid-r
 .conclusions .moment-delta,.concl-text,#metrics-note{max-width:46rem}
 .conclusions .share-row{justify-content:center}
 
+/* Estilo de musica */
+.music-style-row{display:flex;align-items:center;justify-content:center;gap:.6rem;margin-top:.6rem;font-size:.8rem;color:#cfe7dc}
+.music-style-row select{min-height:2.2rem;padding:.2rem .7rem;border:1px solid #7ce0b555;border-radius:2rem;background:#07251dcc;color:#eef8f3;font:inherit}
+
 /* ---------- Experiencias ---------- */
 #exp-dialog{width:min(64rem,94vw);max-height:92vh;padding:0;border:1px solid #7ce0b555;border-radius:1.4rem;background:#071a16;color:#eef8f3;box-shadow:0 2rem 5rem #000c}
 #exp-dialog::backdrop{background:#000000a8}

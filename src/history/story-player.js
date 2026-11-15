@@ -6,6 +6,23 @@
 // Nunca arranca solo.
 import { planBefore, planNow, planSolo, planMix } from './layer-music.js';
 import { planPast } from './story-music.js';
+import { planPastAmbient, planRecentAmbient } from './story-music-ambient.js';
+import { getMusicStyle } from './music-style.js';
+
+const AMBIENT = { planPast: planPastAmbient, planRecent: planRecentAmbient };
+
+// Piano real (Salamander Grand Piano, Alexander Holm, CC-BY 3.0), alojado en
+// public/audio/salamander. Se carga una sola vez y se comparte.
+const PIANO_NOTES = ['A1', 'C2', 'D#2', 'F#2', 'A2', 'C3', 'D#3', 'F#3', 'A3', 'C4', 'D#4', 'F#4', 'A4', 'C5', 'D#5', 'F#5', 'A5', 'C6', 'D#6', 'F#6', 'A6', 'C7'];
+let pianoBuffers = null;
+
+/** Empieza a cargar las muestras del piano (sin esperar). */
+export function preloadPiano(T, baseUrl = '/audio/salamander/') {
+  if (pianoBuffers || !T?.ToneAudioBuffers) return pianoBuffers;
+  const urls = Object.fromEntries(PIANO_NOTES.map((n) => [n, `${n.replace('#', 's')}.mp3`]));
+  pianoBuffers = new T.ToneAudioBuffers({ urls, baseUrl });
+  return pianoBuffers;
+}
 
 const CUT_SECONDS = 0.03;
 const START_DELAY = 0.06;
@@ -26,7 +43,10 @@ export function storyInputs(result, layers) {
 }
 
 export class StoryPlayer {
-  constructor({ ToneLib, getBus, onBar = () => {}, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = (id) => clearTimeout(id) }) {
+  constructor({ ToneLib, getBus, onBar = () => {}, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = (id) => clearTimeout(id), pianoBaseUrl = '/audio/salamander/', getStyle = getMusicStyle }) {
+    this.pianoBaseUrl = pianoBaseUrl;
+    this.getStyle = getStyle;
+    this.verb = null;
     this.Tone = ToneLib;
     this.getBus = getBus;
     this.onBar = onBar;
@@ -66,11 +86,12 @@ export class StoryPlayer {
       return planPast(this.value);
     }
     const { before, birth, years, pastTemp } = storyInputs(s.result, s.layers);
-    if (s.which === 'n' && !s.mode) return birth ? planBefore(birth, { seed: 'birth' }) : null;
-    if (s.mode === 'mix') return planMix(before, years, pastTemp);
-    if (s.mode === 'solo') return planSolo(s.layer, before, years, pastTemp);
-    if (s.which === 'b') return planNow(years, pastTemp);
-    return planBefore(before);
+    const music = this.ambient ? AMBIENT : undefined;
+    if (s.which === 'n' && !s.mode) return birth ? planBefore(birth, { seed: 'birth', music }) : null;
+    if (s.mode === 'mix') return planMix(before, years, pastTemp, { music });
+    if (s.mode === 'solo') return planSolo(s.layer, before, years, pastTemp, { music });
+    if (s.which === 'b') return planNow(years, pastTemp, { music });
+    return planBefore(before, { music });
   }
 
   _side(pan) {
@@ -97,14 +118,38 @@ export class StoryPlayer {
     noise.chain(windFilter, windGain, panner);
     stars.chain(starDelay, panner);
     for (const n of [piano, pad, tension, heart]) n.connect(panner);
-    const side = { panner, piano, pad, tension, heart, stars, starDelay, windGain, windFilter, noise, noiseStarted: false };
+    // Piano real para el estilo ambiental (si las muestras ya cargaron).
+    let keys = null;
+    if (this.ambient && pianoBuffers?.loaded) {
+      const urls = Object.fromEntries(PIANO_NOTES.map((n) => [n, pianoBuffers.get(n)]));
+      keys = new T.Sampler({ urls, release: 2.8, volume: 6 });
+      keys.connect(panner);
+    }
+    if (this.ambient) {
+      pad.set({ envelope: { attack: 1.6, release: 3 } });
+      // Niveles medidos (render offline): piano ~-24 dB, viento ~16 dB por debajo.
+      pad.volume.value = 2;
+      stars.volume.value = -3;
+    }
+    const side = { panner, piano, pad, tension, heart, stars, starDelay, windGain, windFilter, noise, keys, noiseStarted: false };
     this.sides[key] = side;
     return side;
   }
 
-  start({ onEnd = null } = {}) {
+  start({ onEnd = null, afterWait = false } = {}) {
     this.stop();
     if (!this.getBus()) return;
+    this.ambient = this.getStyle() === 'ambient';
+    if (this.ambient) preloadPiano(this.Tone, this.pianoBaseUrl);
+    // Si el piano aun carga, espera (maximo 4 s) para no sonar con el sintetizador.
+    if (this.ambient && pianoBuffers && !pianoBuffers.loaded && !afterWait && this.Tone.loaded) {
+      const token = {};
+      this.waitToken = token;
+      Promise.race([this.Tone.loaded(), new Promise((r) => this.setTimer(r, 4000))]).then(() => {
+        if (this.waitToken === token) this.start({ onEnd, afterWait: true });
+      });
+      return;
+    }
     const plan = this.plan();
     if (!plan) {
       onEnd?.();
@@ -112,13 +157,28 @@ export class StoryPlayer {
     }
     const T = this.Tone;
     this.out = new T.Gain(this.musicMuted ? 0 : 1);
-    this.out.connect(this.getBus());
+    if (this.ambient && T.Reverb) {
+      // Sala grande y suave: la reverberacion es lo que da el aire "ambiental".
+      if (!this.verb) {
+        this.verb = new T.Reverb({ decay: 6, preDelay: 0.03, wet: 0.38 });
+        this.verb.connect(this.getBus());
+      }
+      this.out.connect(this.verb);
+    } else {
+      this.out.connect(this.getBus());
+    }
     this.sides = {};
     const t0 = T.now() + START_DELAY;
     for (const e of plan.events) {
       const side = this._side(e.pan ?? 0);
       const at = t0 + e.time;
-      if (e.type === 'melody') side.piano.triggerAttackRelease(e.note, e.duration, at, e.velocity);
+      const keys = side.keys ?? side.piano;
+      // Las muestras reales son suaves: en el estilo ambiental la velocidad se
+      // lleva a un rango audible (0.35..1) sin perder las diferencias.
+      const vel = this.ambient ? Math.min(1, 0.35 + e.velocity * 1.4) : e.velocity;
+      if (e.type === 'melody') keys.triggerAttackRelease(e.note, e.duration, at, vel);
+      else if (e.type === 'chord') keys.triggerAttackRelease(e.note, e.duration, at, vel);
+      else if (e.type === 'pulse') keys.triggerAttackRelease(e.note, e.duration, at, vel);
       else if (e.type === 'pad') side.pad.triggerAttackRelease(e.notes, e.duration, at, e.velocity);
       else if (e.type === 'tension') side.tension.triggerAttackRelease(e.note, e.duration, at, e.velocity);
       else if (e.type === 'beat') side.heart.triggerAttackRelease('A1', 0.1, at, e.velocity);
@@ -130,11 +190,13 @@ export class StoryPlayer {
         }
         // Rafagas: el volumen sube y baja dentro del tramo segun `gust`.
         const g = side.windGain.gain;
+        // En el estilo ambiental el viento acompana, no tapa al piano.
+        const windScale = this.ambient ? 0.6 : 1;
         const steps = Math.max(2, Math.round(e.duration / 0.5));
-        g.linearRampToValueAtTime(e.level * 0.5, at + 0.3);
+        g.linearRampToValueAtTime(e.level * 0.5 * windScale, at + 0.3);
         for (let k = 1; k <= steps; k += 1) {
           const wave = 0.5 + 0.5 * Math.sin(k * 1.7);
-          g.linearRampToValueAtTime(e.level * (1 - e.gust + e.gust * wave) * 0.5, at + (k / steps) * e.duration);
+          g.linearRampToValueAtTime(e.level * (1 - e.gust + e.gust * wave) * 0.5 * windScale, at + (k / steps) * e.duration);
         }
         side.windFilter.frequency.linearRampToValueAtTime(e.cutoff, at + 0.5);
       }
@@ -168,17 +230,20 @@ export class StoryPlayer {
     this.setTimer(() => {
       for (const side of Object.values(sides)) {
         if (side.noiseStarted) side.noise.stop();
-        for (const [k, n] of Object.entries(side)) if (k !== 'noiseStarted') n.dispose();
+        for (const [k, n] of Object.entries(side)) if (k !== 'noiseStarted' && n) n.dispose();
       }
       out.dispose();
     }, (CUT_SECONDS + 0.05) * 1000);
   }
 
   stop() {
+    this.waitToken = null;
     this._teardown();
   }
 
   dispose() {
     this._teardown();
+    this.verb?.dispose();
+    this.verb = null;
   }
 }

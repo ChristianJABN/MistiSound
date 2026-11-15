@@ -24,7 +24,8 @@ import { createHistoryPanel } from './ui/history-panel.js';
 import { createHistoryController } from './history/history-controller.js';
 import { loadCityCatalog } from './history/cities.js';
 import { DjMixer } from './audio/mixer.js';
-import { StoryPlayer } from './history/story-player.js';
+import { StoryPlayer, preloadPiano } from './history/story-player.js';
+import { getMusicStyle, setMusicStyle } from './history/music-style.js';
 import { createMistiUi } from './ui/misti-ui.js';
 import { createLayersLoader } from './layers/layers-loader.js';
 import { createFlow } from './ui/flow.js';
@@ -477,6 +478,7 @@ async function init() {
       new StoryPlayer({
         ToneLib: audioEngine.Tone,
         getBus: () => audioEngine.getBus(),
+        pianoBaseUrl: `${import.meta.env.BASE_URL}audio/salamander/`,
         onBar: (bar) => store.set((st) => ({ history: { ...st.history, beat: bar } }))
       }),
     onShowPoint: (lat, lon) => selectPoint(lat, lon, { fly: true, sonify: false, internal: true }),
@@ -488,6 +490,19 @@ async function init() {
       if (r.ok && s.confirmedPeriod === period && s.overlayError !== period) return { ok: true };
       return { ok: false, reason: r.reason ?? 'overlay' };
     }
+  });
+  // Estilo de musica (piano ambiental / clasico). El piano se precarga al
+  // pedir una fecha para que este listo cuando empiece el relato.
+  const styleSelect = document.getElementById('music-style');
+  if (styleSelect) {
+    styleSelect.value = getMusicStyle();
+    styleSelect.addEventListener('change', () => {
+      setMusicStyle(styleSelect.value);
+      if (styleSelect.value === 'ambient') preloadPiano(audioEngine.Tone, `${import.meta.env.BASE_URL}audio/salamander/`);
+    });
+  }
+  document.addEventListener('misti:submit', () => {
+    if (getMusicStyle() === 'ambient') preloadPiano(audioEngine.Tone, `${import.meta.env.BASE_URL}audio/salamander/`);
   });
   const historyPanel = createHistoryPanel({
     store,
