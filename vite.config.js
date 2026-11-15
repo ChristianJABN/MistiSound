@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import { handleTts } from './server/tts-core.mjs';
+import { createCommentsService, memoryStore } from './server/comments-core.mjs';
 
 // En desarrollo, /api/tts responde igual que la funcion de Netlify
 // (netlify/functions/tts.mjs), leyendo ELEVENLABS_API_KEY de .env (ignorado
@@ -8,6 +9,30 @@ function ttsDevServer() {
   return {
     name: 'misti-tts-dev',
     configureServer(server) {
+      // Comentarios en desarrollo: en memoria (en Netlify van a Netlify Blobs).
+      const comments = createCommentsService(memoryStore());
+      server.middlewares.use('/api/comments', (req, res) => {
+        const send = (status, data) => {
+          res.statusCode = status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(data));
+        };
+        if (req.method === 'GET') return void comments.list().then((items) => send(200, { items }));
+        if (req.method !== 'POST') return send(405, { error: 'method' });
+        let raw = '';
+        req.on('data', (c) => (raw += c));
+        req.on('end', async () => {
+          let body = null;
+          try {
+            body = JSON.parse(raw);
+          } catch {
+            // lo rechaza la validacion
+          }
+          const out = await comments.add(body, { ip: req.socket.remoteAddress });
+          if (out.ok) send(201, { comment: out.comment });
+          else send(out.status, { error: out.error });
+        });
+      });
       const env = loadEnv(server.config.mode, server.config.root, '');
       server.middlewares.use('/api/tts', (req, res) => {
         if (req.method !== 'POST') {

@@ -280,14 +280,27 @@
             </div>
             <div id="life-closing" class="life-closing" hidden>
               <label for="future-msg" id="future-q" class="life-question"></label>
-              <textarea id="future-msg" rows="2" maxlength="600"></textarea>
+              <textarea id="future-msg" rows="2" maxlength="500"></textarea>
+              <input id="future-name" class="future-name" maxlength="40" autocomplete="nickname" data-i18n-placeholder="futureNamePlaceholder" />
               <button type="button" id="future-save" class="action-btn" data-i18n="lifeSaveMessage"></button>
+              <p id="future-status" class="future-status" role="status"></p>
             <div class="share-row">
               <button type="button" id="share-instagram" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span data-i18n="shareInstagram"></span></button>
               <button type="button" id="share-tiktok" class="share-btn" disabled><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M16.5 3c.4 2.2 1.8 3.7 4 4v3.1c-1.5 0-2.8-.4-4-1.2V15a6 6 0 1 1-6-6v3.2a2.8 2.8 0 1 0 2.8 2.8V3h3.2z"/></svg><span data-i18n="shareTiktok"></span></button>
             </div>
             <button type="button" id="exp-open-inline" class="link-btn" data-i18n="expAddYours"></button>
             </div>
+          </section>
+          <section id="comments-section" class="comments-panel" aria-labelledby="comments-title">
+            <p class="eyebrow" data-i18n="commentsEyebrow"></p>
+            <h2 id="comments-title" data-i18n="commentsTitle"></h2>
+            <div class="comments-filter" role="group" data-i18n-aria="commentsFilterLabel">
+              <button type="button" data-filter="all" aria-pressed="true" data-i18n="commentsAll"></button>
+              <button type="button" data-filter="future" aria-pressed="false" data-i18n="commentsTagFuture"></button>
+              <button type="button" data-filter="experience" aria-pressed="false" data-i18n="commentsTagExperience"></button>
+            </div>
+            <ul id="comments-list" class="comments-list"></ul>
+            <p id="comments-empty" class="comments-empty" data-i18n="commentsEmpty" hidden></p>
           </section>
           <details id="data-details" class="data-details"><summary data-i18n="lifeDataSummary"></summary>
           <section class="sound-panel" aria-labelledby="stage-title">

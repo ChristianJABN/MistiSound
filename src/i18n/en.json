@@ -543,6 +543,21 @@
   "ariaEicResources": "EIC resources",
   "lifeEyebrow": "Your story",
   "lifeDataSummary": "See the data",
-  "lifeSaveMessage": "Save my message to the future",
-  "brandHome": "Misti Sound: back to the home screen"
+  "lifeSaveMessage": "Publish my message to the future",
+  "brandHome": "Misti Sound: back to the home screen",
+  "commentsEyebrow": "Voices of Earth",
+  "commentsTitle": "What other listeners left behind",
+  "commentsAll": "All",
+  "commentsTagFuture": "To someone born today",
+  "commentsTagExperience": "Experience",
+  "commentsBorn": "born in {year}",
+  "commentsEmpty": "No messages yet. Be the first to leave one.",
+  "commentsFilterLabel": "Filter comments",
+  "futureNamePlaceholder": "Your name (optional)",
+  "futureSaved": "Your message is now part of Earth! See it below.",
+  "futureNeedText": "Write your message first.",
+  "futureErr_blocked": "Your message has words that are not allowed. Try others.",
+  "futureErr_links": "Links are not allowed in messages.",
+  "futureErr_rate": "You already sent several messages. Wait a few minutes.",
+  "futureErr_other": "Could not publish. Try again."
 }

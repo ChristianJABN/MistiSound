@@ -31,3 +31,4 @@ Thumbs.db
 
 # Clave de ElevenLabs para la funcion de Netlify (se publica con netlify deploy desde esta PC; nunca a GitHub)
 server/.elevenlabs-key
+server/.comments-admin-key

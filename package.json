@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@netlify/blobs": "^8.2.0",
     "cesium": "1.146.0",
     "three": "0.170.0",
     "tone": "15.1.22"

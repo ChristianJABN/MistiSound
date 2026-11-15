@@ -3,12 +3,13 @@
 // frases de ese momento palabra por palabra (src/history/life-story.js),
 // mueve la linea de tu vida y, al terminar, abre la pregunta final.
 import { lifeLines, lifeTimeline, endQuestion } from '../history/life-story.js';
+import { t } from '../i18n/index.js';
 
 const COOL = [124, 198, 255];
 const WARM = [255, 138, 61];
 const mixColor = (w) => `rgb(${COOL.map((c, i) => Math.round(c + (WARM[i] - c) * (w ?? 0))).join(',')})`;
 
-export function createLifeStory({ store, narrator = null }) {
+export function createLifeStory({ store, narrator = null, postComment = null }) {
   const $ = (id) => document.getElementById(id);
   const textEl = $('life-text');
   const timeline = $('life-timeline');
@@ -144,12 +145,36 @@ export function createLifeStory({ store, narrator = null }) {
       closing.hidden = !show;
       const q = $('future-q');
       if (q) q.textContent = endQuestion(state.lang);
+      const nm = $('future-name');
+      if (nm) nm.placeholder = t(state.lang, 'futureNamePlaceholder');
     }
   }
 
-  $('future-save')?.addEventListener('click', () => {
-    const msg = $('future-msg')?.value.trim() ?? '';
-    document.dispatchEvent(new CustomEvent('misti:open-experience', { detail: { comment: msg } }));
+  // Mensaje para quien nace hoy: se publica en la seccion de comentarios.
+  $('future-save')?.addEventListener('click', async () => {
+    const st = store.get();
+    const status = $('future-status');
+    const say = (key) => {
+      if (status) status.textContent = t(st.lang, key);
+    };
+    const text = $('future-msg')?.value.trim() ?? '';
+    if (!text) return say('futureNeedText');
+    const result = st.history.result;
+    const btn = $('future-save');
+    btn.disabled = true;
+    const out = (await postComment?.({
+      type: 'future',
+      name: $('future-name')?.value.trim() || null,
+      place: (result?.placeLabel ?? '').split(',')[0].trim() || null,
+      year: result?.birthday?.year ?? null,
+      text
+    })) ?? { ok: false, error: 'other' };
+    btn.disabled = false;
+    if (out.ok) {
+      $('future-msg').value = '';
+      say('futureSaved');
+      $('comments-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else say(['blocked', 'links', 'rate'].includes(out.error) ? `futureErr_${out.error}` : 'futureErr_other');
   });
   // Una consulta nueva vuelve al principio del relato.
   document.addEventListener('misti:submit', () => {

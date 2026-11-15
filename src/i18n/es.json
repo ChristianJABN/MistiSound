@@ -543,6 +543,21 @@
   "ariaEicResources": "Recursos EIC",
   "lifeEyebrow": "Tu historia",
   "lifeDataSummary": "Ver los datos",
-  "lifeSaveMessage": "Guardar mi mensaje para el futuro",
-  "brandHome": "Misti Sound: volver a la pantalla principal"
+  "lifeSaveMessage": "Publicar mi mensaje para el futuro",
+  "brandHome": "Misti Sound: volver a la pantalla principal",
+  "commentsEyebrow": "Voces de la Tierra",
+  "commentsTitle": "Lo que dejaron quienes escucharon",
+  "commentsAll": "Todos",
+  "commentsTagFuture": "Para quien nace hoy",
+  "commentsTagExperience": "Experiencia",
+  "commentsBorn": "nació en {year}",
+  "commentsEmpty": "Aún no hay mensajes. Sé la primera persona en dejar uno.",
+  "commentsFilterLabel": "Filtrar comentarios",
+  "futureNamePlaceholder": "Tu nombre (opcional)",
+  "futureSaved": "¡Tu mensaje ya es parte de la Tierra! Míralo abajo.",
+  "futureNeedText": "Escribe tu mensaje primero.",
+  "futureErr_blocked": "Tu mensaje tiene palabras que no se permiten. Prueba con otras.",
+  "futureErr_links": "No se permiten enlaces en los mensajes.",
+  "futureErr_rate": "Ya enviaste varios mensajes. Espera unos minutos.",
+  "futureErr_other": "No se pudo publicar. Intenta de nuevo."
 }

@@ -54,7 +54,7 @@ function pickAudioMime() {
   return ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find((m) => MR.isTypeSupported(m)) ?? null;
 }
 
-export function createExperiences({ store, audioEngine, controller }) {
+export function createExperiences({ store, audioEngine, controller, postComment = null }) {
   const $ = (id) => document.getElementById(id);
   const dialog = $('exp-dialog');
   if (!dialog) return { render() {} };
@@ -195,6 +195,9 @@ export function createExperiences({ store, audioEngine, controller }) {
     };
     writeLocal([entry, ...readLocal()]);
     renderWall();
+    // Tambien a la seccion publica de comentarios (solo el texto).
+    const r = store.get().history.result;
+    postComment?.({ type: 'experience', name: entry.name, place: (entry.place ?? '').split(',')[0].trim() || null, year: r?.birthday?.year ?? null, text: comment });
     setStatus(sent ? 'expSent' : 'expSavedLocal');
     if (sent) {
       form.reset();
