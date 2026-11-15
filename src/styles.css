@@ -513,7 +513,7 @@ html:not([data-mode='history']) #side-panel{grid-column:2}
 #history-demo{display:block;margin:.6rem auto 0}
 .shortcuts-wrap{position:relative;margin-top:1rem;text-align:center}
 .link-btn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.85rem;min-height:2.2rem}
-.shortcuts-pop{position:absolute;bottom:calc(100% + .4rem);left:50%;transform:translateX(-50%);z-index:20;width:min(22rem,90vw);padding:.9rem 1rem;border:1px solid var(--mint-line);border-radius:1rem;background:#05140fef;box-shadow:0 1rem 2.5rem #000a;text-align:left}
+.shortcuts-pop{position:fixed;z-index:80;max-height:calc(100vh - 1.5rem);overflow:auto;width:min(22rem,90vw);padding:.9rem 1rem;border:1px solid var(--mint-line);border-radius:1rem;background:#05140fef;box-shadow:0 1rem 2.5rem #000a;text-align:left}
 .shortcuts-pop dl{display:grid;gap:.45rem;margin:0}
 .shortcuts-pop dl>div{display:grid;grid-template-columns:4.2rem 1fr;align-items:center;gap:.6rem}
 .shortcuts-pop dd{margin:0;color:#fff;font-size:.85rem}
@@ -786,3 +786,24 @@ html[data-stage='dash'][data-mode='history'] #history-stage{grid-column:2;grid-r
   .intro-text{opacity:1}
   .intro-word{opacity:1;filter:none;transform:none}
 }
+
+/* Globo de temperatura: misma mano que las otras esferas */
+.layer-globe #globe-container,.layer-globe #globe-container canvas{cursor:grab}
+.layer-globe #globe-container:active,.layer-globe #globe-container:active canvas{cursor:grabbing}
+
+/* ---------- Globo holografico de la primera pantalla ---------- */
+.hero-globe{position:relative;width:min(24rem,88vw);aspect-ratio:1/0.92;margin:-.5rem auto -3.2rem;pointer-events:none;z-index:1}
+.hero-globe[hidden]{display:none}
+html:not([data-stage='onboard']) .hero-globe{display:none}
+.hero-sphere{position:absolute;left:14%;right:14%;top:2%;aspect-ratio:1/1;pointer-events:auto;cursor:grab;filter:drop-shadow(0 0 1.6rem #47e6ff55)}
+.hero-sphere:active{cursor:grabbing}
+.hero-sphere canvas{width:100%!important;height:100%!important;display:block}
+.hero-orbits{position:absolute;inset:0;width:100%;height:100%}
+.hero-orbits-back{z-index:0}.hero-sphere{z-index:1}.hero-orbits-front{z-index:2}
+.hero-beam{position:absolute;left:50%;bottom:0;width:62%;height:44%;transform:translateX(-50%);background:linear-gradient(to top,#5ff4ffcc,#5ff4ff33 45%,transparent);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);filter:blur(6px);opacity:.75;z-index:0;animation:hero-beam 3.2s ease-in-out infinite}
+.hero-base{position:absolute;left:50%;bottom:-.4rem;width:58%;height:1.6rem;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#bff9ff 0,#43e3ff99 35%,#1fb7d533 60%,transparent 72%);box-shadow:0 0 2.4rem #43e3ffaa;z-index:0}
+@keyframes hero-beam{0%,100%{opacity:.6}50%{opacity:.9}}
+html[data-stage='onboard'] #experience-heading{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+html[data-stage='onboard'] #side-panel{display:flex;flex-direction:column;align-items:center}
+html[data-stage='onboard'] #history-panel{position:relative;z-index:2;width:100%}
+@media (prefers-reduced-motion:reduce){.hero-beam{animation:none}}

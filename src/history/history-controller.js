@@ -18,7 +18,7 @@ import {
   epochAnnouncement,
   buildStory
 } from './history-core.js';
-import { validateBirthday, loadStoryResult, storyAnnouncement, buildBirthdayStory, PAST_FIRST_YEAR } from './story-core.js';
+import { validateBirthday, loadStoryResult, storyAnnouncement, buildBirthdayStory, reflectionMessage, PAST_FIRST_YEAR } from './story-core.js';
 
 /** Texto de cada epoca: relato de cumpleanos (Misti Sound) o comparacion clasica. */
 function announce(result, which, lang) {
@@ -132,7 +132,7 @@ export function createHistoryController({
       m.setMusicMuted?.(Boolean(s.history.musicMuted));
       patch({ playing: { epoch: which, auto, phase: 'music' } });
       if (s.history.voice && !mode) {
-        narrator?.speak(announce(s.history.result, which, s.lang), s.lang, { rate: which === 'a' ? 0.88 : 1.05 });
+        narrator?.speak(announce(s.history.result, which, s.lang), s.lang, { rate: which === 'a' ? 0.88 : which === 'n' ? 0.92 : 0.97 });
       }
       m.start({ mode: 'composition', onEnd: () => handleEnd(which, auto, token) });
     } catch (err) {
@@ -163,6 +163,11 @@ export function createHistoryController({
       return;
     }
     patch({ playing: null, ended: true });
+    // Fin del relato completo: el relator lee la reflexion final.
+    const st = store.get();
+    if (auto && st.history.voice && st.history.result?.story && !st.audio.muted) {
+      narrator?.speak(reflectionMessage(st.history.result, st.lang), st.lang, { rate: 0.9 });
+    }
   }
 
   async function play(which) {

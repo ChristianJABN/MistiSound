@@ -12,7 +12,7 @@ import { buildIntroLines } from './intro-lines.js';
 const LINE_MS = 5500;
 const FALLBACK = ['introLine1', 'introLine2', 'introLine3'];
 
-export function createFlow({ store }) {
+export function createFlow({ store, narrator = null }) {
   const root = document.documentElement;
   const overlay = document.getElementById('intro-overlay');
   const canvas = document.getElementById('intro-canvas');
@@ -55,7 +55,11 @@ export function createFlow({ store }) {
         i += 1;
       }
     }
-    text.setAttribute('aria-label', segs.map((s) => s.text).join(''));
+    const plain = segs.map((s) => s.text).join('');
+    text.setAttribute('aria-label', plain);
+    // Relator: lee cada frase de la intro una sola vez (sin repetir el cierre
+    // si los datos tardan), con un ritmo sereno.
+    if (narrator && store.get().history.voice && lineIdx < lines.length) narrator.speak(plain, store.get().lang, { rate: 0.9 });
     text.classList.add('is-in');
     lineIdx += 1;
   }
@@ -202,6 +206,8 @@ export function createFlow({ store }) {
       lines = [];
     }
     if (!lines.length) lines = FALLBACK.map((k) => [{ text: t(lang, k), hl: false }]);
+    // Relator: descarga ya las 3 frases para que la voz no se retrase.
+    if (narrator && store.get().history.voice) for (const segs of lines) narrator.preload?.(segs.map((x) => x.text).join(''), lang, { rate: 0.9 });
     minIntroMs = LINE_MS * lines.length - 300;
     startedAt = performance.now();
     if (reduced()) {

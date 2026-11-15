@@ -49,7 +49,7 @@ const POOLS = {
       'Tuning the planet just for you…'
     ],
     seasons: ['summer', 'autumn', 'winter', 'spring'],
-    date: ({ day, monthName, year }) => `${monthName} ${day}, ${year}`,
+    date: ({ day, monthName, year }) => `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${day}, ${year}`,
     decade: (d) => `The ${d >= 2000 ? `${d}s` : `'${String(d).slice(2)}s`}`
   }
 };

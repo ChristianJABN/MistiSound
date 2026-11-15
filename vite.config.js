@@ -1,4 +1,41 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import { handleTts } from './server/tts-core.mjs';
+
+// En desarrollo, /api/tts responde igual que la funcion de Netlify
+// (netlify/functions/tts.mjs), leyendo ELEVENLABS_API_KEY de .env (ignorado
+// por git). La clave nunca se incluye en el bundle del navegador.
+function ttsDevServer() {
+  return {
+    name: 'misti-tts-dev',
+    configureServer(server) {
+      const env = loadEnv(server.config.mode, server.config.root, '');
+      server.middlewares.use('/api/tts', (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          return res.end();
+        }
+        let raw = '';
+        req.on('data', (c) => (raw += c));
+        req.on('end', async () => {
+          let body = null;
+          try {
+            body = JSON.parse(raw);
+          } catch {
+            // cuerpo invalido: lo rechaza la validacion
+          }
+          const out = await handleTts(body, { apiKey: env.ELEVENLABS_API_KEY });
+          if (!out.ok) {
+            res.statusCode = out.status;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: out.error }));
+          }
+          res.setHeader('Content-Type', 'audio/mpeg');
+          res.end(Buffer.from(out.audio));
+        });
+      });
+    }
+  };
+}
 
 // CesiumJS necesita sus assets estaticos (Workers, ThirdParty, Assets,
 // Widgets): se copian a public/cesium/ ANTES de vite/vite build via
@@ -10,6 +47,7 @@ import { defineConfig } from 'vite';
 // cambian durante el desarrollo, no hace falta un plugin con watcher.
 export default defineConfig({
   base: './',
+  plugins: [ttsDevServer()],
   server: {
     fs: {
       allow: ['..']

@@ -528,5 +528,17 @@
   "estSpoken_neighbors": " (estimated)",
   "musicStyleLabel": "Music style",
   "musicStyleAmbient": "Ambient piano",
-  "musicStyleClassic": "Classic (heartbeat)"
+  "musicStyleClassic": "Classic (heartbeat)",
+  "docTitle": "Misti Sound · The sound of your date on Earth",
+  "ariaAudioControls": "Audio controls (always visible)",
+  "ariaGlobe": "3D globe",
+  "ariaHistory": "Your date",
+  "ariaSidePanel": "Information and controls panel",
+  "ariaResult": "Result",
+  "ariaShare": "Share",
+  "ariaTimeline": "Timeline",
+  "ariaPointInfo": "Selected point information",
+  "ariaLegend": "Anomaly legend",
+  "ariaCompare": "Compare A/B",
+  "ariaEicResources": "EIC resources"
 }

@@ -99,6 +99,12 @@ void main() {
     sw = mix(sw, vec3(0.45, 1.0, 0.65), smoothstep(0.62, 0.8, n) * 0.5);
     float bands = smoothstep(0.42, 0.72, n);
     c = mix(base, sw, bands * 0.4) + sw * bands * 0.1;
+  } else if (style > 3.5) {
+    // Tierra real (globo de la primera pantalla): textura de dia, luces de
+    // ciudades en el lado oscuro y un leve tinte holografico cian.
+    day = sqrt(day); night = sqrt(night);
+    c = day * 1.12 + vec3(1.0, 0.78, 0.45) * pow(dot(night, W), 1.6) * 0.35;
+    c = mix(c, c * vec3(0.78, 1.04, 1.16), 0.3);
   } else {
     // Temperatura: planeta en llamas (tierra mas caliente que el oceano).
     float land = smoothstep(0.02, 0.12, day.g - day.b + 0.06);
@@ -223,7 +229,7 @@ export function createEffectSphere(host, opts = {}) {
     haloStrength = 0.6,
     home = 4.9
   } = opts;
-  const styleId = { data: 0, co2: 1, ozone: 2, temp: 3 }[style] ?? 0;
+  const styleId = { data: 0, co2: 1, ozone: 2, temp: 3, earth: 4 }[style] ?? 0;
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   let renderer;
   try {

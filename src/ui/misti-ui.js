@@ -143,10 +143,29 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
   // ---------- Atajos ----------
   const pop = $('shortcuts-pop');
   const popBtn = $('shortcuts-btn');
+  // El panel vive en <body> (no dentro de la tarjeta del formulario, cuyo
+  // desenfoque y recorte lo cortaban) y se coloca junto al boton al abrirse:
+  // arriba si cabe, si no debajo; siempre dentro de la ventana.
+  if (pop && pop.parentElement !== document.body) document.body.appendChild(pop);
+  function placePop() {
+    if (pop.hidden) return;
+    const b = popBtn.getBoundingClientRect();
+    const w = pop.offsetWidth;
+    const h = pop.offsetHeight;
+    const left = Math.min(window.innerWidth - w - 12, Math.max(12, b.left + b.width / 2 - w / 2));
+    const above = b.top - h - 8;
+    const top = above >= 12 ? above : b.bottom + 8;
+    pop.style.left = `${left}px`;
+    // Siempre dentro de la ventana (si es muy baja, el panel hace scroll propio).
+    pop.style.top = `${Math.max(12, Math.min(window.innerHeight - h - 12, top))}px`;
+  }
   const setPop = (open) => {
     pop.hidden = !open;
     popBtn.setAttribute('aria-expanded', String(open));
+    placePop();
   };
+  window.addEventListener('resize', placePop);
+  window.addEventListener('scroll', placePop, { passive: true });
   popBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     setPop(pop.hidden);

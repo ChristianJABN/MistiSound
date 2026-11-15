@@ -29,11 +29,12 @@ import { getMusicStyle, setMusicStyle } from './history/music-style.js';
 import { createMistiUi } from './ui/misti-ui.js';
 import { createLayersLoader } from './layers/layers-loader.js';
 import { createFlow } from './ui/flow.js';
+import { createHeroGlobe } from './ui/hero-globe.js';
 import { createExperiences } from './ui/experiences.js';
 import { imageryForEpoch, createDatedImageryLayer } from './globe/dated-imagery.js';
 import { createTabs } from './ui/tabs.js';
 import { createShare, resolvePresetPeriod, ALLOWED_DJ_CHANNELS } from './sharing/preset.js';
-import { createNarrator } from './accessibility/narration.js';
+import { createNarrator, createCloudVoice } from './accessibility/narration.js';
 import { setupKeyboardSupport } from './accessibility/keyboard.js';
 import { createActionCoordinator, runGuardedAction } from './app/action-coordinator.js';
 import { createAuroraExperience } from './ui/aurora-experience.js';
@@ -42,7 +43,9 @@ const DATA_BASE_URL = `${import.meta.env.BASE_URL}data/`;
 
 const store = createStore(createInitialState({ lang: getStoredLang() }));
 const audioEngine = new AudioEngine();
-const narrator = createNarrator({ audioEngine });
+// Relator: voz de ElevenLabs via /api/tts (servidor); si no esta disponible,
+// la mejor voz del navegador (ver src/accessibility/narration.js).
+const narrator = createNarrator({ audioEngine, cloud: createCloudVoice({ endpoint: '/api/tts' }) });
 
 let overlayLayer = null;
 let overlayGeneration = 0;
@@ -94,6 +97,7 @@ function setLang(lang) {
   if (!availableLangs().includes(lang)) return;
   setStoredLang(lang);
   document.documentElement.lang = lang;
+  document.title = t(lang, 'docTitle');
   store.set({ lang });
   applyStaticTexts();
   localizeGlobeWidgets(globeHandle?.viewer, lang);
@@ -251,6 +255,7 @@ async function changePeriod(repository, period, { sonify = true } = {}) {
 
 async function init() {
   document.documentElement.lang = store.get().lang;
+  document.title = t(store.get().lang, 'docTitle');
   applyStaticTexts();
 
   // Coordinador de concurrencia: se crea ANTES de registrar cualquier
@@ -515,7 +520,9 @@ async function init() {
   });
   // Misti Sound: capas CO2/ozono, A+, guia docente, atajos y compartir.
   const layersLoader = createLayersLoader({ store, baseUrl: import.meta.env.BASE_URL });
-  const flow = createFlow({ store });
+  const flow = createFlow({ store, narrator });
+  // Globo holografico de la primera pantalla (solo en la etapa inicial).
+  const heroGlobe = createHeroGlobe(document.getElementById('hero-globe'), { baseUrl: import.meta.env.BASE_URL });
   const experiences = createExperiences({ store, audioEngine, controller: historyController });
   const mistiUi = createMistiUi({
     store,
@@ -766,6 +773,7 @@ async function init() {
     layersLoader.sync(state);
     mistiUi.render(state);
     flow.render(state);
+    heroGlobe.render(state);
     experiences.render(state);
     if (datedImageryLayer && (state.activeTab !== 'history' || state.history.status !== 'ready')) clearDatedImagery();
     share.render(state);
@@ -784,6 +792,7 @@ async function init() {
   historyPanel.render(store.get());
   mistiUi.render(store.get());
   flow.render(store.get());
+  heroGlobe.render(store.get());
   share.render(store.get());
 
   await share.applyFromUrlIfPresent();

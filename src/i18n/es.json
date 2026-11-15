@@ -528,5 +528,17 @@
   "estSpoken_neighbors": " (estimado)",
   "musicStyleLabel": "Estilo de música",
   "musicStyleAmbient": "Piano ambiental",
-  "musicStyleClassic": "Clásico (latido)"
+  "musicStyleClassic": "Clásico (latido)",
+  "docTitle": "Misti Sound · El sonido de tu fecha en la Tierra",
+  "ariaAudioControls": "Controles de audio (siempre visibles)",
+  "ariaGlobe": "Globo 3D",
+  "ariaHistory": "Tu fecha",
+  "ariaSidePanel": "Panel de información y controles",
+  "ariaResult": "Resultado",
+  "ariaShare": "Compartir",
+  "ariaTimeline": "Línea de tiempo",
+  "ariaPointInfo": "Información del punto seleccionado",
+  "ariaLegend": "Leyenda de anomalía",
+  "ariaCompare": "Comparar A/B",
+  "ariaEicResources": "Recursos EIC"
 }

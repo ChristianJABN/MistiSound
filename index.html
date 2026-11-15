@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="es" data-mode="history" data-stage="onboard">
+<html lang="en" data-mode="history" data-stage="onboard">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#071c19" />
-    <meta name="description" content="Misti Sound: elige un lugar y tu cumpleaños y escucha cómo cambió el clima de tu fecha desde 1950, con datos de NASA. Inclusivo y para el aula." />
+    <meta name="description" content="Misti Sound: choose a place and your birth date and hear how its climate changed since 1950, with NASA data. Inclusive and classroom-ready." />
     <link rel="icon" type="image/png" href="/images/favicon.png" />
-    <title>Misti Sound · El sonido de tu fecha en la Tierra</title>
+    <title>Misti Sound · The sound of your date on Earth</title>
   </head>
   <body>
     <a id="skip-link" href="#app-main" data-i18n="skipToContent">Saltar al contenido principal</a>
@@ -38,8 +38,9 @@
       </section>
       <main id="app-main">
 
-        <aside id="side-panel" aria-label="Panel de informacion y controles">
-          <div id="history-panel" aria-label="Historia">
+        <aside id="side-panel" aria-label="Panel de informacion y controles" data-i18n-aria="ariaSidePanel">
+          <div id="hero-globe" class="hero-globe" aria-hidden="true"></div>
+          <div id="history-panel" aria-label="Historia" data-i18n-aria="ariaHistory">
             <div class="panel-heading"><span class="step-badge" aria-hidden="true">01</span><div><p class="eyebrow" data-i18n="auroraYourCoordinates"></p><h3 data-i18n="auroraStart"></h3></div><span class="panel-star" aria-hidden="true">✧</span></div>
             <form id="history-form" novalidate>
               <div class="history-place-group">
@@ -100,7 +101,7 @@
           </div>
 
           <div id="explore-panel" hidden>
-            <section id="point-info" aria-label="Informacion del punto seleccionado">
+            <section id="point-info" aria-label="Informacion del punto seleccionado" data-i18n-aria="ariaPointInfo">
               <h2 data-i18n="pointTitle"></h2>
               <p id="point-empty" data-i18n="pointEmpty"></p>
               <div id="point-details" hidden>
@@ -129,7 +130,7 @@
               </div>
             </section>
 
-            <section id="legend-section" aria-label="Leyenda de anomalia">
+            <section id="legend-section" aria-label="Leyenda de anomalia" data-i18n-aria="ariaLegend">
               <h2 data-i18n="legendTitle"></h2>
               <canvas id="legend-canvas" width="240" height="14"></canvas>
               <div id="legend-labels">
@@ -137,7 +138,7 @@
               </div>
             </section>
 
-            <section id="eic-panel" aria-label="Recursos EIC"></section>
+            <section id="eic-panel" aria-label="Recursos EIC" data-i18n-aria="ariaEicResources"></section>
           </div>
 
           <div id="peru-panel" hidden aria-label="Peru">
@@ -194,7 +195,7 @@
               </div>
             </section>
 
-            <section id="acc-compare" aria-label="Comparar A/B">
+            <section id="acc-compare" aria-label="Comparar A/B" data-i18n-aria="ariaCompare">
               <h3 data-i18n="accessibleCompareTitle"></h3>
               <button type="button" id="acc-compare-a-btn" disabled data-i18n="compareSetA"></button>
               <button type="button" id="acc-compare-b-btn" disabled data-i18n="compareSetB"></button>
@@ -228,7 +229,7 @@
             <article class="globe-card layer-temp" data-layer="temp" aria-labelledby="layer-temp-title">
               <div class="globe-head"><h3 id="layer-temp-title" data-i18n="layerTempTitle"></h3><button type="button" class="layer-listen" data-layer="temp" disabled><span aria-hidden="true">🔊</span> <span data-i18n="layerListen"></span></button></div>
               <div class="globe-stage layer-globe"><canvas class="sound-ring" aria-hidden="true"></canvas>
-                <section id="globe-section" aria-label="Globo 3D">
+                <section id="globe-section" aria-label="Globo 3D" data-i18n-aria="ariaGlobe">
               <div class="globe-aura" aria-hidden="true"></div>
               <canvas id="orbit-waves" aria-hidden="true"></canvas>
               <div id="globe-container"></div>
@@ -316,7 +317,7 @@
             <button type="button" id="exp-open-inline" class="link-btn" data-i18n="expAddYours"></button>
             <p id="history-card-status" role="status"></p>
           </section>
-          <section id="history-result" hidden aria-label="Resultado">
+          <section id="history-result" hidden aria-label="Resultado" data-i18n-aria="ariaResult">
             <ol id="history-years" class="year-beats" aria-label=""></ol>
             <details class="listening-options"><summary data-i18n="auroraListeningOptions"></summary>
               <div id="history-view" role="group" aria-labelledby="history-view-label">
@@ -357,7 +358,7 @@
           </section>
         </aside>
       </main>
-      <div id="support-row"><p class="data-credit"><span class="signal-dot" aria-hidden="true"></span><span data-i18n="auroraDataCredit"></span></p><details id="share-drawer" class="support-drawer"><summary><span aria-hidden="true">↗</span> <span data-i18n="auroraShare"></span></summary>          <section id="share-section" aria-label="Compartir">
+      <div id="support-row"><p class="data-credit"><span class="signal-dot" aria-hidden="true"></span><span data-i18n="auroraDataCredit"></span></p><details id="share-drawer" class="support-drawer"><summary><span aria-hidden="true">↗</span> <span data-i18n="auroraShare"></span></summary>          <section id="share-section" aria-label="Compartir" data-i18n-aria="ariaShare">
             <h2 data-i18n="shareTitle"></h2>
             <button type="button" id="share-save-btn" class="action-btn" data-i18n="shareSaveBtn"></button>
             <label for="share-url" data-i18n="shareUrlLabel"></label>
@@ -369,7 +370,7 @@
             <ul id="share-saved-list"></ul>
           </section></details></div>
 
-      <div id="sound-deck"><p id="audio-start-error" role="alert" hidden></p><section id="audio-controls" aria-label="Controles de audio (siempre visibles)">
+      <div id="sound-deck"><p id="audio-start-error" role="alert" hidden></p><section id="audio-controls" aria-label="Controles de audio (siempre visibles)" data-i18n-aria="ariaAudioControls">
         <button type="button" id="audio-toggle" class="action-btn" data-i18n="audioActivate"></button>
         <div id="volume-row">
           <button type="button" id="mute-toggle" class="icon-btn" aria-pressed="false">
@@ -383,7 +384,7 @@
           <span id="volume-value" aria-hidden="true"></span>
         </div>
       </section>
-      <footer id="timeline-bar" aria-label="Linea de tiempo">
+      <footer id="timeline-bar" aria-label="Linea de tiempo" data-i18n-aria="ariaTimeline">
         <div class="timeline-date"><label for="year-select" class="sr-only" data-i18n="yearLabel"></label>
         <select id="year-select"></select>
         <label for="month-select" class="sr-only" data-i18n="monthLabel"></label>
@@ -407,7 +408,7 @@
         <div class="exp-grid">
           <form id="exp-form" name="experiencias" method="POST" data-netlify="true" netlify-honeypot="bot-field" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="form-name" value="experiencias" />
-            <p hidden><label>No llenar: <input name="bot-field" /></label></p>
+            <p hidden><label>Leave empty: <input name="bot-field" /></label></p>
             <h3 data-i18n="expShareTitle"></h3>
             <div class="form-row"><label for="exp-name" data-i18n="expName"></label><input id="exp-name" name="nombre" maxlength="60" autocomplete="nickname" /></div>
             <div class="form-row"><label for="exp-comment" data-i18n="expComment"></label><textarea id="exp-comment" name="comentario" rows="3" maxlength="600" required></textarea></div>

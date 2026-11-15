@@ -50,10 +50,11 @@ describe('createNarrator: volumen sigue al volumen maestro y al mute', () => {
 
     narrator.speak('hola', 'es');
     const [utterance] = window.speechSynthesis.spoken;
-    // -12 dB -> ganancia lineal ~0.251, nunca 1 (volumen por defecto) ni 0.
-    expect(utterance.volume).toBeGreaterThan(0);
+    // Misti Sound: la voz del relator va por encima de la musica. -12 dB ->
+    // 0.6 + 0.4 * 28/40 = 0.88: sigue al volumen, nunca 1 fijo ni un susurro.
+    expect(utterance.volume).toBeGreaterThan(0.6);
     expect(utterance.volume).toBeLessThan(1);
-    expect(utterance.volume).toBeCloseTo(10 ** (-12 / 20), 3);
+    expect(utterance.volume).toBeCloseTo(0.88, 3);
   });
 
   it('volumen 0 dB (maximo) produce ganancia lineal 1', () => {
