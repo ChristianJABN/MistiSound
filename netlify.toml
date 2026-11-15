@@ -9,6 +9,8 @@
 
 [functions]
   directory = "netlify/functions"
+  # Clave local (ignorada por git): solo existe en la PC que publica.
+  included_files = ["server/.elevenlabs-key"]
 
 [build.environment]
   NODE_VERSION = "22"
