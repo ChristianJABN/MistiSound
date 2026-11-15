@@ -262,7 +262,7 @@
   "auroraNatural": "Vista natural",
   "auroraAnomalies": "Anomalías",
   "auroraGlobeHint": "Arrastra para explorar · toca para elegir un lugar",
-  "auroraDataCredit": "Datos NASA / NOAA · Sonificación climática",
+  "auroraDataCredit": "Datos: NASA GISTEMP, GISS, Aura OMI, GIBS y SVS · NOAA GML · Voz del narrador generada con IA (ElevenLabs) · Código asistido por IA (Claude) · Video de fondo generado con IA (Gemini) · Piano: Salamander Grand Piano (CC BY 3.0)",
   "auroraShare": "Guardar o compartir",
   "auroraExploreTitle": "Un planeta. Millones de historias.",
   "auroraExploreIntro": "Explora un lugar, viaja en el tiempo y escucha sus anomalías de temperatura.",
@@ -559,5 +559,11 @@
   "futureErr_blocked": "Tu mensaje tiene palabras que no se permiten. Prueba con otras.",
   "futureErr_links": "No se permiten enlaces en los mensajes.",
   "futureErr_rate": "Ya enviaste varios mensajes. Espera unos minutos.",
-  "futureErr_other": "No se pudo publicar. Intenta de nuevo."
+  "futureErr_other": "No se pudo publicar. Intenta de nuevo.",
+  "aiWatermarkVideo": "Video de fondo generado con IA (Gemini)",
+  "guideAiTitle": "Créditos y uso de inteligencia artificial",
+  "guideAiVoice": "Voz del narrador: generada con IA de texto a voz (ElevenLabs, voces «Diego» y «Brian»).",
+  "guideAiCode": "Código y textos: escritos por el equipo con asistencia de IA (Claude, de Anthropic).",
+  "guideAiVideo": "Video de fondo de la aurora: generado con IA (Gemini, de Google); lleva marca de agua visible.",
+  "guideAiMusic": "Música: NO es IA. Se genera con algoritmos propios a partir de los datos de NASA (Tone.js) y un piano grabado (Salamander Grand Piano, CC BY 3.0). Ningún contenido generado con IA usa logotipos ni marcas de la NASA."
 }

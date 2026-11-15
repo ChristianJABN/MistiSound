@@ -38,7 +38,7 @@ export default async (req) => {
   if (!out.ok) return Response.json({ error: out.error }, { status: out.status });
   return new Response(out.audio, {
     status: 200,
-    headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400' }
+    headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'public, max-age=86400', 'X-AI-Generated': 'ElevenLabs text-to-speech (narrator voice)' }
   });
 };
 

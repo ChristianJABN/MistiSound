@@ -60,6 +60,7 @@ function ttsDevServer() {
             return res.end(JSON.stringify({ error: out.error }));
           }
           res.setHeader('Content-Type', 'audio/mpeg');
+          res.setHeader('X-AI-Generated', 'ElevenLabs text-to-speech (narrator voice)');
           res.end(Buffer.from(out.audio));
         });
       });

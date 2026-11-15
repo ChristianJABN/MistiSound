@@ -6,11 +6,17 @@
     <meta name="theme-color" content="#071c19" />
     <meta name="description" content="Misti Sound: choose a place and your birth date and hear how its climate changed since 1950, with NASA data. Inclusive and classroom-ready." />
     <link rel="icon" type="image/png" href="/images/favicon.png" />
+    <!-- Declaracion de uso de IA (NASA Space Apps): ver tambien la Guia Docente y el pie de pagina. -->
+    <meta name="ai-assisted" content="true" />
+    <meta name="ai-disclosure" content="Background video: AI-generated with Google Gemini (visible watermark). Narrator voice audio: AI-generated with ElevenLabs text-to-speech. Code and texts: written with AI assistance from Claude (Anthropic). Music: generated algorithmically from NASA data (not AI). Data: NASA GISTEMP v4, NASA GISS, NASA Aura OMI via GIBS, NASA SVS, NOAA GML." />
+    <meta name="generator-ai-audio" content="ElevenLabs TTS (voices: Brian, Diego)" />
+    <meta name="generator-ai-code" content="Claude (Anthropic)" />
+    <meta name="generator-ai-video" content="Google Gemini" />
     <title>Misti Sound · The sound of your date on Earth</title>
   </head>
   <body>
     <a id="skip-link" href="#app-main" data-i18n="skipToContent">Saltar al contenido principal</a>
-    <div id="cosmos" aria-hidden="true"><video id="bg-video" autoplay muted loop playsinline preload="auto" poster="/video/fondo-poster.jpg"><source src="/video/fondo.webm" type="video/webm" /><source src="/video/fondo.mp4" type="video/mp4" /></video><div class="aurora-veil aurora-green"></div><div class="aurora-veil aurora-violet"></div><div id="star-field"></div><span class="shooting-star star-one"></span><span class="shooting-star star-two"></span><span class="shooting-star star-three"></span></div>
+    <p id="ai-watermark" class="ai-watermark" data-i18n="aiWatermarkVideo"></p><div id="cosmos" aria-hidden="true"><video id="bg-video" autoplay muted loop playsinline preload="auto" poster="/video/fondo-poster.jpg"><source src="/video/fondo.webm" type="video/webm" /><source src="/video/fondo.mp4" type="video/mp4" /></video><div class="aurora-veil aurora-green"></div><div class="aurora-veil aurora-violet"></div><div id="star-field"></div><span class="shooting-star star-one"></span><span class="shooting-star star-two"></span><span class="shooting-star star-three"></span></div>
     <canvas id="cursor-trail" aria-hidden="true"></canvas><div id="cosmic-cursor" aria-hidden="true"><span></span></div><div id="click-echoes" aria-hidden="true"></div>
     <div id="app">
       <header id="app-header">
@@ -477,6 +483,8 @@
         <h3 data-i18n="guideQuestionsTitle"></h3>
         <ul class="guide-questions"><li data-i18n="guideQ1"></li><li data-i18n="guideQ2"></li><li data-i18n="guideQ3"></li></ul>
         <p class="guide-sources" data-i18n="guideSources"></p>
+        <h3 data-i18n="guideAiTitle"></h3>
+        <ul class="guide-ai"><li data-i18n="guideAiVoice"></li><li data-i18n="guideAiCode"></li><li data-i18n="guideAiVideo"></li><li data-i18n="guideAiMusic"></li></ul>
         <div class="guide-actions">
           <button type="button" id="guide-pdf" class="guide-btn" data-i18n="guidePdf"></button>
           <button type="button" id="guide-copy" class="guide-btn" data-i18n="guideCopy"></button>
