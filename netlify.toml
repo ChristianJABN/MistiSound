@@ -1,9 +1,14 @@
-# Configuracion de Netlify: sitio estatico (Vite). Sin funciones, plugins ni redirecciones.
+# Configuracion de Netlify: sitio estatico (Vite) + una funcion: /api/tts
+# (relator con ElevenLabs, netlify/functions/tts.mjs). La clave va en
+# Site configuration > Environment variables > ELEVENLABS_API_KEY.
 # La app usa enlaces con hash (#), asi que no hace falta regla SPA: un JSON o
 # asset faltante debe devolver 404 y no una pagina HTML.
 [build]
   command = "npm run build"
   publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"

@@ -56,9 +56,53 @@ function dbToLinearVolume(db) {
   return Math.min(1, Math.max(0, 0.6 + 0.4 * ((Math.max(-40, Math.min(0, db)) + 40) / 40)));
 }
 
-export function createNarrator({ audioEngine } = {}) {
+/**
+ * Relator de ElevenLabs via /api/tts (funcion del servidor: la clave nunca
+ * esta en el navegador). Cachea cada audio por texto+idioma+ritmo y se
+ * desactiva para la visita al primer fallo (sitio sin la funcion, sin clave
+ * o sin creditos), volviendo a la voz del navegador sin demoras.
+ */
+export function createCloudVoice({ endpoint = '/api/tts', fetchImpl = (...a) => fetch(...a), timeoutMs = 6000 } = {}) {
+  const cache = new Map();
+  let disabled = false;
+  function key(text, lang, rate) {
+    return `${lang}|${Math.round((Number(rate) || 1) * 100)}|${text}`;
+  }
+  /** Promesa con la URL del audio (object URL) o null si no hay voz en la nube. */
+  function load(text, lang, rate = 1) {
+    if (disabled || !text) return Promise.resolve(null);
+    const k = key(text, lang, rate);
+    if (!cache.has(k)) {
+      const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+      const timer = setTimeout(() => ctrl?.abort(), timeoutMs);
+      const p = fetchImpl(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, lang, rate }),
+        signal: ctrl?.signal
+      })
+        .then(async (res) => {
+          if (!res.ok || !(res.headers.get('content-type') || '').includes('audio')) throw new Error(`tts ${res.status}`);
+          return URL.createObjectURL(await res.blob());
+        })
+        .catch(() => {
+          disabled = true;
+          cache.delete(k);
+          return null;
+        })
+        .finally(() => clearTimeout(timer));
+      cache.set(k, p);
+    }
+    return cache.get(k);
+  }
+  return { load, preload: load, isDisabled: () => disabled };
+}
+
+export function createNarrator({ audioEngine, cloud = null } = {}) {
   const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
   let current = null;
+  let token = 0;
+  let audioEl = null;
   const listeners = new Set();
 
   if (synth && typeof synth.addEventListener === 'function') {
@@ -69,7 +113,7 @@ export function createNarrator({ audioEngine } = {}) {
   }
 
   function isSupported() {
-    return Boolean(synth);
+    return Boolean(synth) || Boolean(cloud && !cloud.isDisabled());
   }
 
   function isSpeaking() {
@@ -94,10 +138,43 @@ export function createNarrator({ audioEngine } = {}) {
   /** Cancela cualquier narracion en curso. Restaura el volumen de musica
    * (deja de "duckear") sin tocar el mute del usuario. */
   function cancel() {
-    if (!synth) return;
+    token += 1;
     const wasSpeaking = current !== null;
-    synth.cancel();
+    if (audioEl) {
+      audioEl.pause();
+      audioEl = null;
+    }
+    synth?.cancel();
     if (wasSpeaking) endCurrent();
+  }
+
+  /** Reproduce un audio de ElevenLabs con el mismo volumen, silencio y atenuacion de musica. */
+  function playCloud(url, lang, myToken) {
+    if (myToken !== token) return;
+    const el = new Audio(url);
+    el.volume = audioEngine?.isMuted() ? 0 : dbToLinearVolume(audioEngine?.volumeDb);
+    const marker = { el };
+    current = marker;
+    audioEl = el;
+    el.onplay = () => {
+      if (current !== marker) return;
+      audioEngine?.setDucked(true);
+      notify({ speaking: true, lang });
+    };
+    el.onended = () => {
+      if (current === marker) endCurrent();
+    };
+    el.onerror = () => {
+      if (current === marker) endCurrent();
+    };
+    el.play().catch(() => {
+      if (current === marker) endCurrent();
+    });
+  }
+
+  /** Adelanta la descarga del audio (p. ej. las frases de la intro). */
+  function preload(text, lang, { rate = 1 } = {}) {
+    cloud?.preload(text, lang, rate);
   }
 
   /**
@@ -108,6 +185,21 @@ export function createNarrator({ audioEngine } = {}) {
    * texto igual, de forma no condicionada a esto).
    */
   function speak(text, lang, { rate = 1 } = {}) {
+    if (!text) return false;
+    if (cloud && !cloud.isDisabled()) {
+      cancel();
+      const myToken = token;
+      cloud.load(text, lang, rate).then((url) => {
+        if (myToken !== token) return; // otra frase o un cancel llegaron antes
+        if (url) playCloud(url, lang, myToken);
+        else speakBrowser(text, lang, { rate });
+      });
+      return true;
+    }
+    return speakBrowser(text, lang, { rate });
+  }
+
+  function speakBrowser(text, lang, { rate = 1 } = {}) {
     if (!synth || !text) return false;
     cancel();
     const utterance = new SpeechSynthesisUtterance(text);
@@ -144,5 +236,5 @@ export function createNarrator({ audioEngine } = {}) {
     return true;
   }
 
-  return { isSupported, isSpeaking, speak, cancel, onChange };
+  return { isSupported, isSpeaking, speak, preload, cancel, onChange };
 }

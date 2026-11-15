@@ -206,6 +206,8 @@ export function createFlow({ store, narrator = null }) {
       lines = [];
     }
     if (!lines.length) lines = FALLBACK.map((k) => [{ text: t(lang, k), hl: false }]);
+    // Relator: descarga ya las 3 frases para que la voz no se retrase.
+    if (narrator && store.get().history.voice) for (const segs of lines) narrator.preload?.(segs.map((x) => x.text).join(''), lang, { rate: 0.9 });
     minIntroMs = LINE_MS * lines.length - 300;
     startedAt = performance.now();
     if (reduced()) {

@@ -33,7 +33,7 @@ import { createExperiences } from './ui/experiences.js';
 import { imageryForEpoch, createDatedImageryLayer } from './globe/dated-imagery.js';
 import { createTabs } from './ui/tabs.js';
 import { createShare, resolvePresetPeriod, ALLOWED_DJ_CHANNELS } from './sharing/preset.js';
-import { createNarrator } from './accessibility/narration.js';
+import { createNarrator, createCloudVoice } from './accessibility/narration.js';
 import { setupKeyboardSupport } from './accessibility/keyboard.js';
 import { createActionCoordinator, runGuardedAction } from './app/action-coordinator.js';
 import { createAuroraExperience } from './ui/aurora-experience.js';
@@ -42,7 +42,9 @@ const DATA_BASE_URL = `${import.meta.env.BASE_URL}data/`;
 
 const store = createStore(createInitialState({ lang: getStoredLang() }));
 const audioEngine = new AudioEngine();
-const narrator = createNarrator({ audioEngine });
+// Relator: voz de ElevenLabs via /api/tts (servidor); si no esta disponible,
+// la mejor voz del navegador (ver src/accessibility/narration.js).
+const narrator = createNarrator({ audioEngine, cloud: createCloudVoice({ endpoint: '/api/tts' }) });
 
 let overlayLayer = null;
 let overlayGeneration = 0;
