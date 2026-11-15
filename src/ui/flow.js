@@ -36,6 +36,9 @@ export function createFlow({ store, narrator = null }) {
   let lineTimer = 0;
   let lineIdx = 0;
   let skipRequested = false;
+  // El logo vuelve a la pantalla principal: no regresar solo al tablero
+  // hasta que la persona pida otra fecha.
+  let stayHome = false;
   let lines = [];
   let minIntroMs = LINE_MS * 3;
 
@@ -208,7 +211,19 @@ export function createFlow({ store, narrator = null }) {
     if (stage() === 'intro') raf = requestAnimationFrame(drawIntro);
   }
 
+  /** Volver a la pantalla principal (logo): corta la intro y deja el formulario. */
+  function home() {
+    stayHome = true;
+    clearInterval(lineTimer);
+    cancelAnimationFrame(raf);
+    raf = 0;
+    overlay.hidden = true;
+    setStage('onboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function startIntro(event) {
+    stayHome = false;
     skipRequested = false;
     lineIdx = 0;
     const lang = store.get().lang;
@@ -278,8 +293,8 @@ export function createFlow({ store, narrator = null }) {
     }
     // Enlace compartido: va directo al tablero. Una vez en el tablero no se
     // vuelve al inicio al editar el formulario (se ven guiones hasta consultar).
-    if (ready && stage() === 'onboard') setStage('dash');
+    if (ready && stage() === 'onboard' && !stayHome) setStage('dash');
   }
 
-  return { render, startIntro, stage };
+  return { render, startIntro, stage, home };
 }

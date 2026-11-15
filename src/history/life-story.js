@@ -25,6 +25,8 @@ const T = {
     aCool: 'Antes de que llegaras, {month} en {place} era un poco más cálido que hoy.',
     aAir: 'El aire era más limpio y el escudo de ozono que protege la piel, más grueso.',
     aAirPlain: 'El aire era más limpio.',
+    aListen: 'Escucha cómo sonaba.',
+    nListen: 'Escucha el año en que naciste.',
     nFirst: 'El {date} respiraste por primera vez.',
     nFirstNoYear: 'Un {date} respiraste por primera vez.',
     nCo2: 'Ese aire ya traía {pct} más CO₂ que el de tus abuelos en los años 50.',
@@ -56,6 +58,8 @@ const T = {
     aCool: 'Before you arrived, {month} in {place} was a little warmer than today.',
     aAir: 'The air was cleaner, and the ozone shield that protects our skin was thicker.',
     aAirPlain: 'The air was cleaner.',
+    aListen: 'Listen to how it sounded.',
+    nListen: 'Listen to the year you were born.',
     nFirst: 'On {date}, you took your first breath.',
     nFirstNoYear: 'On a {date}, you took your first breath.',
     nCo2: 'That air already carried {pct} more CO₂ than your grandparents breathed in the 1950s.',
@@ -126,6 +130,7 @@ export function lifeLines(moment, { result, data = null, lang = 'es', now = new 
     if (w) lines.push(fill(L[`a${w}`]));
     const ozThinner = isNum(oz?.past?.mean) && isNum(oz?.recent?.mean) && oz.past.mean > oz.recent.mean;
     lines.push(plain(ozThinner ? L.aAir : L.aAirPlain));
+    lines.push(plain(L.aListen));
     return lines;
   }
   if (moment === 'n') {
@@ -135,6 +140,7 @@ export function lifeLines(moment, { result, data = null, lang = 'es', now = new 
     if (isNum(birth) && isNum(past) && birth > past) {
       lines.push(fill(L.nCo2, { pct: L.pct(Math.round(((birth - past) / past) * 100)) }));
     }
+    lines.push(plain(L.nListen));
     return lines;
   }
   if (moment === 'b') {
@@ -148,6 +154,8 @@ export function lifeLines(moment, { result, data = null, lang = 'es', now = new 
     const birth = co2?.birth?.ppm;
     const ratio = moleculeRatio(isNum(birth) ? birth : co2?.past?.mean, co2?.recent?.mean);
     if (ratio) lines.push(fill(isNum(birth) ? L.bCo2Birth : L.bCo2Past, { n: String(ratio.n), n1: String(ratio.n1) }));
+    // La musica de hoy suena despues de la voz: el narrador la presenta.
+    lines.push(...L.interlude.map(plain));
     return lines;
   }
   if (moment === 'end') return [plain(L.endOzone), plain(L.endLife)];

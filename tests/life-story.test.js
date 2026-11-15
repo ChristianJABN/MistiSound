@@ -20,12 +20,12 @@ describe('tu historia: frases personales', () => {
 
   it('before: cooler past, thicker ozone, place highlighted', () => {
     const lines = lifeLines('a', { result, data, lang: 'es', now });
-    expect(all(lines)).toBe('Antes de que llegaras, cada agosto en Arequipa era más fresco. El aire era más limpio y el escudo de ozono que protege la piel, más grueso.');
+    expect(all(lines)).toBe('Antes de que llegaras, cada agosto en Arequipa era más fresco. El aire era más limpio y el escudo de ozono que protege la piel, más grueso. Escucha cómo sonaba.');
     expect(lines[0].filter((s) => s.hl).map((s) => s.text)).toEqual(['agosto', 'Arequipa']);
   });
 
   it('birth: first breath and CO2 percent', () => {
-    expect(all(lifeLines('n', { result, data, lang: 'es', now }))).toBe('El 15 de agosto de 1995 respiraste por primera vez. Ese aire ya traía un 14 % más CO₂ que el de tus abuelos en los años 50.');
+    expect(all(lifeLines('n', { result, data, lang: 'es', now }))).toBe('El 15 de agosto de 1995 respiraste por primera vez. Ese aire ya traía un 14 % más CO₂ que el de tus abuelos en los años 50. Escucha el año en que naciste.');
   });
 
   it('now: age, fever and molecules, no technical units', () => {
@@ -44,8 +44,8 @@ describe('tu historia: frases personales', () => {
 
   it('english, no year, no data', () => {
     const r = { placeLabel: 'Madrid, Spain', birthday: { day: 5, month: 5, year: null }, delta: 0.2 };
-    expect(all(lifeLines('b', { result: r, data: null, lang: 'en', now }))).toBe('Today your city has grown warmer: every May is 0.2 °C warmer than in the 1950s.');
-    expect(all(lifeLines('n', { result: r, lang: 'en', now }))).toBe('On a May 5, you took your first breath.');
+    expect(all(lifeLines('b', { result: r, data: null, lang: 'en', now }))).toBe('Today your city has grown warmer: every May is 0.2 °C warmer than in the 1950s. Now listen to how today sounds.');
+    expect(all(lifeLines('n', { result: r, lang: 'en', now }))).toBe('On a May 5, you took your first breath. Listen to the year you were born.');
     expect(endQuestion('en')).toBe('What would you tell someone born today?');
     expect(all(lifeLines('end', { result: r, lang: 'es', now }))).toContain('Hoy se está curando.');
   });

@@ -472,7 +472,10 @@ async function init() {
     manifest,
     cache: new LruCache(2)
   });
+  // "Tu historia" narra cada momento antes de su musica (ver life-ui.js).
+  let lifeStoryRef = null;
   historyController = createHistoryController({
+    introduceEpoch: (ctx) => (lifeStoryRef ? lifeStoryRef.narrate(ctx) : Promise.resolve()),
     store,
     repository: historyRepository,
     audioEngine,
@@ -522,10 +525,25 @@ async function init() {
   // Misti Sound: capas CO2/ozono, A+, guia docente, atajos y compartir.
   const layersLoader = createLayersLoader({ store, baseUrl: import.meta.env.BASE_URL });
   const flow = createFlow({ store, narrator });
+  // Logo: volver a la pantalla principal (para la musica, la voz y la intro).
+  const brand = document.getElementById('brand');
+  const goHome = () => {
+    historyController.stop();
+    narrator.cancel?.();
+    flow.home();
+  };
+  brand?.addEventListener('click', goHome);
+  brand?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      goHome();
+    }
+  });
   // Globo holografico de la primera pantalla (solo en la etapa inicial).
   const heroGlobe = createHeroGlobe(document.getElementById('hero-globe'), { baseUrl: import.meta.env.BASE_URL });
   const experiences = createExperiences({ store, audioEngine, controller: historyController });
-  const lifeStory = createLifeStory({ store, narrator, controller: historyController });
+  const lifeStory = createLifeStory({ store, narrator });
+  lifeStoryRef = lifeStory;
   const mistiUi = createMistiUi({
     store,
     audioEngine,

@@ -28,7 +28,7 @@ function announce(result, which, lang) {
 export const EPOCH_GAP_MS = 1000;
 // Silencio antes del presente en el relato de cumpleanos ('Ahora escucha
 // como suena hoy'): el contraste se siente mas despues de una pausa.
-export const STORY_INTERLUDE_MS = 3500;
+export const STORY_INTERLUDE_MS = 1200;
 
 export function createHistoryController({
   store,
@@ -41,7 +41,10 @@ export function createHistoryController({
   setTimeoutFn = (fn, ms) => setTimeout(fn, ms),
   clearTimeoutFn = (id) => clearTimeout(id),
   gapMs = EPOCH_GAP_MS,
-  interludeMs = STORY_INTERLUDE_MS
+  interludeMs = STORY_INTERLUDE_MS,
+  // Relato de cumpleanos: el narrador habla ANTES de la musica de cada
+  // momento (devuelve una promesa que se cumple al terminar la voz).
+  introduceEpoch = null
 }) {
   const coordinator = createActionCoordinator();
   let playToken = 0;
@@ -105,7 +108,11 @@ export function createHistoryController({
     if (epoch.value === null) return { ok: false, reason: 'noData' };
     silence();
     const token = playToken;
-    patch({ playing: { epoch: which, auto, phase: 'loading' }, lastPlay: kind, ended: false, playError: null, viewing: which });
+    // Relato automatico: la voz del momento empieza YA, mientras el globo
+    // carga la epoca; la musica espera a que la voz termine.
+    const narrate = auto && !mode && introduceEpoch && s0.history.result?.story;
+    patch({ playing: { epoch: which, auto, phase: narrate ? 'narration' : 'loading' }, lastPlay: kind, ended: false, playError: null, viewing: which });
+    const narration = narrate ? Promise.resolve().then(() => introduceEpoch({ which, result: s0.history.result })).catch(() => {}) : null;
 
     // El globo y la linea de tiempo deben confirmar ESTA epoca antes de que
     // suene o hable nada; un fallo o una orden posterior no deja musica tardia.
@@ -127,6 +134,16 @@ export function createHistoryController({
     if (stillBlocked) {
       abortPlay();
       return { ok: false, reason: stillBlocked };
+    }
+    // Primero la voz, luego la musica (solo en el relato automatico).
+    if (narration) {
+      await narration;
+      if (token !== playToken) return { ok: false, reason: 'stale' };
+      const blockedAfter = canSound(store.get());
+      if (blockedAfter) {
+        abortPlay();
+        return { ok: false, reason: blockedAfter };
+      }
     }
     try {
       const m = ensureMixer();

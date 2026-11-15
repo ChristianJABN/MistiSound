@@ -181,7 +181,7 @@ describe('imagen satelital con fecha (GIBS)', () => {
 });
 
 describe('controlador: relato de cumpleanos', () => {
-  function harness() {
+  function harness(extra = {}) {
     const store = createStore({ ...createInitialState({ lang: 'es' }), activeTab: 'history', audio: { started: true, muted: false, volumeDb: -12 } });
     const { repo } = makeRepo();
     const shown = [];
@@ -207,10 +207,27 @@ describe('controlador: relato de cumpleanos', () => {
       onShowEpoch: (p, ctx) => {
         shown.push([p, ctx?.which, Boolean(ctx?.silent)]);
         return { ok: true };
-      }
+      },
+      ...extra
     });
     return { store, controller, shown, story, narrator, mixer };
   }
+
+  it('relato: primero la voz del momento, despues su musica (sin superponerse)', async () => {
+    let release;
+    const introduceEpoch = vi.fn(() => new Promise((r) => (release = r)));
+    const h = harness({ introduceEpoch });
+    await h.controller.submitStory({ place: { lat: 0, lon: 0 }, day: '14', month: '1' });
+    const started = h.controller.playAuto();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(introduceEpoch).toHaveBeenCalledWith(expect.objectContaining({ which: 'a' }));
+    expect(h.store.get().history.playing).toMatchObject({ epoch: 'a', phase: 'narration' });
+    expect(h.mixer.lastStart).toBeUndefined(); // la musica espera a la voz
+    release();
+    await started;
+    expect(h.mixer.lastStart).toBeDefined();
+    expect(h.store.get().history.playing).toMatchObject({ epoch: 'a', phase: 'music' });
+  });
 
   it('consultar muestra el pasado en el globo SIN sonido; ver hoy tampoco suena', async () => {
     const h = harness();

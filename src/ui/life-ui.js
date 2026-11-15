@@ -8,7 +8,7 @@ const COOL = [124, 198, 255];
 const WARM = [255, 138, 61];
 const mixColor = (w) => `rgb(${COOL.map((c, i) => Math.round(c + (WARM[i] - c) * (w ?? 0))).join(',')})`;
 
-export function createLifeStory({ store, narrator = null, controller = null }) {
+export function createLifeStory({ store, narrator = null }) {
   const $ = (id) => document.getElementById(id);
   const textEl = $('life-text');
   const timeline = $('life-timeline');
@@ -21,27 +21,6 @@ export function createLifeStory({ store, narrator = null, controller = null }) {
   let lastMoment = 'idle';
   let points = [];
   let preloadKey = '';
-  let currentMoment = 'idle';
-  let speakingFor = null;
-  // Cuando la voz de un momento termina, el relato sigue (sin hueco): una
-  // pausa corta y pasa al siguiente momento.
-  narrator?.onChange?.(({ speaking }) => {
-    if (speaking) {
-      speakingFor = currentMoment;
-      return;
-    }
-    const was = speakingFor;
-    speakingFor = null;
-    if (!['a', 'n', 'b'].includes(was) || was !== currentMoment) return;
-    // Si la voz termino antes de que empiece la musica (el globo aun carga),
-    // se reintenta hasta que la musica suene.
-    const tryAdvance = (left) => {
-      if (currentMoment !== was) return;
-      if (!controller?.advanceAuto?.() && left > 0 && store.get().history.playing?.phase === 'loading') setTimeout(() => tryAdvance(left - 1), 500);
-    };
-    setTimeout(() => tryAdvance(10), 900);
-  });
-
   // El relator lee "Tu historia" (igual que la intro): respeta el silencio y
   // la preferencia guardada de apagar la voz.
   const voiceOn = (state) => {
@@ -53,7 +32,6 @@ export function createLifeStory({ store, narrator = null, controller = null }) {
     }
     return narrator.isSupported?.() ?? true;
   };
-  const rateFor = (moment) => (moment === 'interlude' ? 0.85 : 0.9);
   const sayText = (moment, ctx) => {
     const lines = lifeLines(moment, ctx).map((segs) => segs.map((s) => s.text).join(''));
     if (moment === 'end') lines.push(endQuestion(ctx.lang));
@@ -64,10 +42,8 @@ export function createLifeStory({ store, narrator = null, controller = null }) {
   function momentOf(h) {
     const p = h.playing;
     if (p) {
-      // Silencio antes del presente: 'Ahora escucha como suena hoy'.
-      if (p.phase === 'gap' && p.auto && p.epoch === 'b') return 'interlude';
       if (p.phase === 'gap') return lastMoment;
-      // Mientras el globo carga la epoca, la frase y la voz ya empiezan: sin hueco.
+      // Carga del globo, voz del narrador y luego la musica: la misma frase.
       return p.epoch;
     }
     if (h.ended && h.lastPlay === 'auto') return 'end';
@@ -143,26 +119,25 @@ export function createLifeStory({ store, narrator = null, controller = null }) {
     const data = h.layers?.key === result.key ? h.layers?.data : null;
     renderTimeline(state, result, data);
     const moment = momentOf(h);
-    currentMoment = moment;
-    if (moment !== 'interlude') lastMoment = moment;
+    lastMoment = moment;
     const key = `${result.key}|${state.lang}|${moment}|${Boolean(data)}`;
     const ctx = { result, data, lang: state.lang };
     // Descarga por adelantado la voz de todos los momentos (en fila).
-    const pk = `${result.key}|${state.lang}|${Boolean(data)}`;
-    if (data && pk !== preloadKey && voiceOn(state)) {
+    // Solo con los datos completos: el texto precargado debe ser igual al narrado.
+    const layersReady = h.layers?.key === result.key && h.layers?.status !== 'loading';
+    const pk = `${result.key}|${state.lang}|${layersReady}`;
+    if (data && layersReady && pk !== preloadKey && voiceOn(state)) {
       preloadKey = pk;
-      for (const m of ['a', 'n', 'interlude', 'b', 'end']) narrator.preload?.(sayText(m, ctx), state.lang, { rate: rateFor(m) });
+      for (const m of ['a', 'n', 'b', 'end']) narrator.preload?.(sayText(m, ctx), state.lang, { rate: 0.9 });
     }
     if (key !== shownKey) {
       const changedMoment = !shownKey.includes(`|${moment}|`);
       shownKey = key;
       renderWords(lifeLines(moment, ctx));
       setProgress(moment);
-      // Narra solo al cambiar de momento mientras suena el relato (no al
-      // cambiar de idioma ni con el panel en reposo).
-      if (moment !== 'idle' && changedMoment && (h.playing || moment === 'end') && voiceOn(state)) {
-        narrator.speak(sayText(moment, ctx), state.lang, { rate: rateFor(moment) });
-      }
+      // Los momentos con musica los narra narrate() (antes de su musica);
+      // aqui solo el cierre.
+      if (moment === 'end' && changedMoment && voiceOn(state)) narrator.speak(sayText(moment, ctx), state.lang, { rate: 0.9 });
     }
     if (closing) {
       const show = moment === 'end' || !closing.hidden;
@@ -185,5 +160,42 @@ export function createLifeStory({ store, narrator = null, controller = null }) {
     if (ta) ta.value = '';
   });
 
-  return { render };
+  /**
+   * Primero la voz, luego la musica: el controlador llama a esto antes de la
+   * musica de cada momento del relato. Se cumple cuando el narrador termina
+   * (o tras un tiempo de lectura si no hay voz) para que no se superpongan.
+   */
+  function narrate({ which }) {
+    const st = store.get();
+    const result = st.history.result;
+    const data = st.history.layers?.key === result?.key ? st.history.layers?.data : null;
+    const text = result ? sayText(which, { result, data, lang: st.lang }) : '';
+    const readMs = Math.min(9000, 2000 + text.split(/\s+/).length * 300);
+    return new Promise((resolve) => {
+      let done = false;
+      let started = false;
+      let off = null;
+      let timer = null;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        off?.();
+        clearTimeout(timer);
+        setTimeout(resolve, 500); // un respiro antes de la musica
+      };
+      if (!text || !voiceOn(st)) {
+        timer = setTimeout(finish, readMs);
+        return;
+      }
+      off = narrator.onChange?.(({ speaking }) => {
+        if (speaking) started = true;
+        else if (started) finish();
+      }) ?? null;
+      const ok = narrator.speak(text, st.lang, { rate: 0.9 });
+      // Sin voz disponible: tiempo para leer. Tope de seguridad: 30 s.
+      timer = setTimeout(finish, ok === false ? readMs : 30000);
+    });
+  }
+
+  return { render, narrate };
 }

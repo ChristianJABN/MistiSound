@@ -43,7 +43,9 @@ h2,h3{color:var(--heading)}
 /* Header and editorial introduction */
 #app{min-height:100svh;padding:0 2.25rem 10.3125rem;max-width:112.5rem;margin:auto}
 #app-header{min-height:4.375rem;display:flex;align-items:center;gap:1.5rem;border-bottom:1px solid #a9d7bd14;max-width:92.5rem;margin:auto}
-#brand{display:flex;align-items:center;gap:0.625rem;flex-shrink:0}
+#brand{display:flex;align-items:center;gap:0.625rem;flex-shrink:0;cursor:pointer;border-radius:.6rem}
+#brand:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+#brand:hover #brand-mark{filter:drop-shadow(0 0 .5rem #7ce0b5aa)}
 #brand-mark{width:2.5rem;height:2.5rem;border-radius:50%;object-fit:cover;flex-shrink:0}
 #brand h1{margin:0;font:600 1.4375rem/1.1 var(--font-serif);letter-spacing:-.8px}
 #section-tabs{display:flex;justify-content:center;align-self:stretch;gap:1.625rem;flex:1}
