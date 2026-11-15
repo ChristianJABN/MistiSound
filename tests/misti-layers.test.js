@@ -67,7 +67,11 @@ describe('Ozono (OMI via GIBS)', () => {
     const loadImage = async (url) => (url.includes('/2006-') ? transparent : url.includes('/2025-') ? make([40, 50, 60, 255]) : make([10, 20, 30, 255]));
     const r = await ozoneForStory({ lat: -16.4, lon: -71.5, month: 8, recentYears: [2024, 2025], colormap: cmap, loadImage, today: new Date(Date.UTC(2026, 10, 14)) });
     expect(r.past.series.find((s) => s.year === 2006).du).toBeNull();
-    expect(r.past.mean).toBe(251);
+    // El "antes" es la decada de 1950 ESTIMADA desde OMI 2005-2009 (251 DU).
+    expect(r.past.base.mean).toBe(251);
+    expect(r.past.estimated).toBe(true);
+    expect(r.past.firstYear).toBe(1950);
+    expect(r.past.mean).toBeGreaterThan(251);
     expect(r.recent.mean).toBe(Math.round((251.25 + 301.25) / 2));
   });
 });
@@ -160,8 +164,9 @@ describe('Misti Sound v2: capas del anio de nacimiento', () => {
     const loadImage = async () => img;
     const today = new Date(Date.UTC(2026, 10, 14));
     const old = await ozoneForStory({ lat: 0, lon: 0, month: 8, recentYears: [2025], birthYear: 1995, colormap: cmap, loadImage, today });
-    expect(old.birth).toEqual({ year: 1995, du: null, measured: false });
+    // Antes de 2005: estimado (lat 0 = tropicos, deficit 1 %; 1995 = deficit completo).
+    expect(old.birth).toEqual({ year: 1995, du: 251, measured: false, estimated: true });
     const recent = await ozoneForStory({ lat: 0, lon: 0, month: 8, recentYears: [2025], birthYear: 2010, colormap: cmap, loadImage, today });
-    expect(recent.birth).toEqual({ year: 2010, du: 251, measured: true });
+    expect(recent.birth).toEqual({ year: 2010, du: 251, measured: true, estimated: false });
   });
 });

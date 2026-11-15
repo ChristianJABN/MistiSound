@@ -426,8 +426,8 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
         t: time,
         level,
         values: [
-          { label: `${oz.past.firstYear}–${String(oz.past.lastYear).slice(2)}`, du: oz.past.mean },
-          ...(oz.birth?.measured ? [{ label: String(oz.birth.year), du: oz.birth.du }] : []),
+          { label: oz.past.estimated ? `≈${oz.past.firstYear}s` : `${oz.past.firstYear}–${String(oz.past.lastYear).slice(2)}`, du: oz.past.mean },
+          ...(oz.birth?.du != null ? [{ label: `${oz.birth.estimated ? '≈' : ''}${oz.birth.year}`, du: oz.birth.du }] : []),
           { label: t(l, 'chartNow'), du: oz.recent.mean }
         ]
       });
@@ -438,9 +438,12 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
   // ---------- Render ----------
   const fmtPpm = (v) => (v === null || v === undefined ? '—' : `${Math.round(v)}`);
   const fmtDu = (v) => (v === null || v === undefined ? '—' : `${Math.round(v)}`);
-  function setMetric(id, value, unit) {
+  function setMetric(id, value, unit, estTitle = '') {
     const el = $(id);
     if (!el) return;
+    // Estimado / proyectado: prefijo "≈" y un titulo que lo explica.
+    if (estTitle && value !== '—' && value !== '…') value = `≈ ${value}`;
+    el.title = estTitle;
     const text = value === '—' ? '—' : `${value} ${unit}`;
     if (el.dataset.v === text) return;
     el.dataset.v = text;
@@ -459,11 +462,13 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
     const dash = loading ? '…' : '—';
     setMetric('m-a-co2', data?.co2 ? fmtPpm(data.co2.past.mean) : dash, 'ppm');
     setMetric('m-b-co2', data?.co2 ? fmtPpm(data.co2.recent.mean) : dash, 'ppm');
-    setMetric('m-a-oz', data?.ozone ? fmtDu(data.ozone.past.mean) : dash, 'DU');
+    setMetric('m-a-oz', data?.ozone ? fmtDu(data.ozone.past.mean) : dash, 'DU', data?.ozone?.past.estimated ? t(l, 'estOzone') : '');
     setMetric('m-b-oz', data?.ozone ? fmtDu(data.ozone.recent.mean) : dash, 'DU');
-    setMetric('m-n-co2', data?.co2?.birth ? fmtPpm(data.co2.birth.ppm) : dash, 'ppm');
-    // Ozono de tu anio: solo si naciste en 2005 o despues (OMI empieza en 2004).
-    setMetric('m-n-oz', data?.ozone?.birth?.measured ? fmtDu(data.ozone.birth.du) : data ? t(l, 'noOzoneYet') : dash, data?.ozone?.birth?.measured ? 'DU' : '');
+    setMetric('m-n-co2', data?.co2?.birth ? fmtPpm(data.co2.birth.ppm) : dash, 'ppm', data?.co2?.birth?.projected ? t(l, 'estProjection') : '');
+    // Ozono de tu anio: medido desde 2005; antes, estimado (WMO 2022).
+    const ozBirth = data?.ozone?.birth;
+    const ozBirthOk = ozBirth?.du != null;
+    setMetric('m-n-oz', ozBirthOk ? fmtDu(ozBirth.du) : data ? t(l, 'noOzoneYet') : dash, ozBirthOk ? 'DU' : '', ozBirthOk && ozBirth.estimated ? t(l, 'estOzone') : '');
 
     // Conclusiones
     const signed = (v, digits = 0) => (v === null || v === undefined ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(digits)}`);
@@ -472,7 +477,11 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
     const cc = $('concl-co2-v');
     if (cc) cc.textContent = data?.co2 ? `${signed(data.co2.recent.mean - data.co2.past.mean)} ppm` : '—';
     const co = $('concl-oz-v');
-    if (co) co.textContent = data?.ozone?.past.mean != null && data.ozone.recent.mean != null ? `${signed(data.ozone.recent.mean - data.ozone.past.mean)} DU` : '—';
+    if (co) {
+      const ok = data?.ozone?.past.mean != null && data.ozone.recent.mean != null;
+      co.textContent = ok ? `${data.ozone.past.estimated ? '≈ ' : ''}${signed(data.ozone.recent.mean - data.ozone.past.mean)} DU` : '—';
+      co.title = ok && data.ozone.past.estimated ? t(l, 'estOzone') : '';
+    }
     if (data?.co2) co2Sphere?.setStarRate(Math.min(1, (starRate(data.co2.recent.mean) ?? 4) / 8));
     const big = $('chart-temp-big');
     if (big) big.textContent = result?.delta != null ? `${result.delta >= 0 ? '+' : '−'}${formatDegrees(Math.abs(result.delta))} °C` : '';
@@ -487,7 +496,7 @@ export function createMistiUi({ store, audioEngine, controller, onLayoutChange =
     if (h.playing) ensureAnalyser();
     if (document.documentElement.dataset.stage === 'dash') startLoop();
     const note = $('metrics-note');
-    if (note) note.textContent = story ? t(l, 'metricsNote', { oz: data?.ozone ? `${data.ozone.past.firstYear}–${data.ozone.past.lastYear}` : '2005–2009' }) : '';
+    if (note) note.textContent = story ? t(l, 'metricsNote', { oz: data?.ozone?.past.base ? `${data.ozone.past.base.firstYear}–${data.ozone.past.base.lastYear}` : '2005–2009' }) : '';
 
     for (const btn of document.querySelectorAll('.layer-listen')) {
       btn.disabled = !story || state.audio.muted;

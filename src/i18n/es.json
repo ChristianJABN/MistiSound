@@ -419,7 +419,7 @@
   "metricTemp": "Temp:",
   "metricCo2": "CO₂:",
   "metricOzone": "Ozono:",
-  "metricsNote": "Temp: anomalía de tu zona vs 1951–1980 (NASA GISTEMP). CO₂: dato global (NASA GISS / NOAA). Ozono: tu zona, satélite NASA Aura; el «antes» es {oz}, los primeros años medidos (no hay mediciones de 1950).",
+  "metricsNote": "Temp: anomalía de tu zona vs 1951–1980 (NASA GISTEMP). CO₂: dato global (NASA GISS / NOAA). Ozono: tu zona, satélite NASA Aura desde 2005; los valores con «≈» antes de 2005 son estimados desde {oz} y la disminución de ozono de tu latitud (WMO/PNUMA 2022). «≈» también marca celdas sin dato (promedio de vecinas) y proyecciones de meses aún no publicados.",
   "mixBtn": "Mezclar ambos tiempos",
   "shareInstagram": "Compartir en Instagram",
   "shareTiktok": "Compartir en TikTok",
@@ -520,5 +520,13 @@
   "expMineSent": "Tu experiencia · enviada, pendiente de revisión",
   "expMineLocal": "Tu experiencia · solo en este navegador",
   "expAddYours": "Dejar mi experiencia",
-  "layerPlayingOzone": "Sonando solo la capa ozono: primero 2005–2009 (los primeros años medidos), luego los últimos 5 años."
+  "layerPlayingOzone": "Sonando solo la capa ozono: primero 2005–2009 (los primeros años medidos), luego los últimos 5 años.",
+  "estOzone": "Estimado: no hay mediciones de ozono por satélite antes de 2005. Se calcula desde NASA OMI 2005–2009 de tu zona y la disminución de ozono de tu latitud (evaluación WMO/PNUMA 2022).",
+  "estNeighbors": "Estimado: tu celda no tiene dato ese mes; es el promedio de las celdas vecinas de NASA GISTEMP.",
+  "estProjection": "Proyección: ese mes aún no está publicado; se calcula con la tendencia de los datos.",
+  "estSpoken_projection": " (proyección)",
+  "estSpoken_neighbors": " (estimado)",
+  "musicStyleLabel": "Estilo de música",
+  "musicStyleAmbient": "Piano ambiental",
+  "musicStyleClassic": "Clásico (latido)"
 }

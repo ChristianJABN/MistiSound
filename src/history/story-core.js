@@ -14,6 +14,7 @@ import { findNearestCell } from '../data/grid.js';
 import { formatPeriod } from '../data/repository.js';
 import { computeDelta, formatDegrees, formatCoords } from './history-core.js';
 import { t } from '../i18n/index.js';
+import { cellOrNeighbors, projectTemperature } from '../data/estimates.js';
 
 export const PAST_FIRST_YEAR = 1950;
 export const PAST_YEARS = 10;
@@ -24,7 +25,7 @@ export const MIN_RECENT_VALUES = 3;
 const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 /** Dia (1..31) y mes (1..12) obligatorios; ano opcional dentro de la fuente. */
-export function validateBirthday({ day, month, year }, availablePeriods) {
+export function validateBirthday({ day, month, year }, availablePeriods, { today = new Date() } = {}) {
   const dayText = String(day ?? '').trim();
   const monthText = String(month ?? '').trim();
   const yearText = String(year ?? '').trim();
@@ -41,7 +42,12 @@ export function validateBirthday({ day, month, year }, availablePeriods) {
     y = Number(yearText);
     const period = formatPeriod(y, m);
     if (period < periods[0]) return { ok: false, reason: 'beforeSource', min: periods[0] };
-    if (period > periods[periods.length - 1]) return { ok: false, reason: 'afterLatest', max: periods[periods.length - 1] };
+    if (period > periods[periods.length - 1]) {
+      // Mes aun sin publicar: se acepta hasta el mes actual y se PROYECTA.
+      const now = formatPeriod(today.getUTCFullYear(), today.getUTCMonth() + 1);
+      if (period > now) return { ok: false, reason: 'afterLatest', max: periods[periods.length - 1] };
+      return { ok: true, day: d, month: m, year: y, projected: true };
+    }
     if (!periods.includes(period)) return { ok: false, reason: 'notAvailable' };
   }
   return { ok: true, day: d, month: m, year: y };
@@ -73,7 +79,9 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
   const windows = storyWindows(month, repository.availablePeriods);
   if (windows.past.length === 0 || windows.recent.length === 0) return { ok: false, reason: 'notAvailable' };
   const birthPeriod = year ? formatPeriod(year, month) : null;
-  const unique = [...new Set([...windows.past, ...windows.recent, ...(birthPeriod ? [birthPeriod] : [])])];
+  // Si el mes de nacimiento aun no esta publicado no se pide: se proyecta.
+  const birthAvailable = birthPeriod ? repository.availablePeriods.includes(birthPeriod) : false;
+  const unique = [...new Set([...windows.past, ...windows.recent, ...(birthAvailable ? [birthPeriod] : [])])];
   let datasets;
   try {
     const loaded = await Promise.all(unique.map((p) => repository.fetchPeriod(p)));
@@ -82,6 +90,7 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
     return { ok: false, reason: 'error', error: err };
   }
   const cells = new Map();
+  const filled = new Set();
   let ref = null;
   let refDs = null;
   try {
@@ -98,13 +107,16 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
       if (sha !== (refDs.source?.original_file_sha256 ?? null) || ds.baseline_period !== refDs.baseline_period || ds.units !== refDs.units) {
         return { ok: false, reason: 'sourceMismatch' };
       }
-      cells.set(p, typeof cell.value === 'number' ? cell.value : null);
+      // Celda sin dato: promedio de las celdas vecinas (marcado como estimado).
+      const v = cellOrNeighbors(ds, cell.latIdx, cell.lonIdx);
+      cells.set(p, v.value);
+      if (v.estimated) filled.add(p);
     }
   } catch (err) {
     return { ok: false, reason: 'error', error: err };
   }
 
-  const series = (periods) => periods.map((p) => ({ period: p, year: Number(p.slice(0, 4)), value: cells.get(p) }));
+  const series = (periods) => periods.map((p) => ({ period: p, year: Number(p.slice(0, 4)), value: cells.get(p), estimated: filled.has(p) }));
   const pastSeries = series(windows.past);
   const recentSeries = series(windows.recent);
   const pastValues = pastSeries.filter((s) => s.value !== null);
@@ -112,6 +124,20 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
   const pastMean = pastValues.length >= MIN_PAST_VALUES ? mean(pastSeries.map((s) => s.value)) : null;
   const recentMean = recentValues.length >= MIN_RECENT_VALUES ? mean(recentSeries.map((s) => s.value)) : null;
   const round = (v) => (v === null ? null : Number(v.toFixed(4)));
+  // Tu anio: dato (o vecinas) si esta publicado; si no, proyeccion lineal.
+  let birthValue = null;
+  let birthEstimate = null;
+  if (birthPeriod) {
+    if (birthAvailable) {
+      birthValue = cells.get(birthPeriod);
+      if (filled.has(birthPeriod)) birthEstimate = 'neighbors';
+    } else {
+      const center = (s) => (s[0].year + s[s.length - 1].year) / 2;
+      birthValue = projectTemperature({ pastMean, pastCenter: center(pastSeries), recentMean, recentCenter: center(recentSeries) }, year);
+      birthValue = birthValue === null ? null : round(birthValue);
+      if (birthValue !== null) birthEstimate = 'projection';
+    }
+  }
 
   return {
     ok: true,
@@ -128,7 +154,8 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
         value: round(pastMean),
         firstYear: pastSeries[0].year,
         lastYear: pastSeries[pastSeries.length - 1].year,
-        series: pastSeries
+        series: pastSeries,
+        estimated: pastSeries.some((s) => s.estimated)
       },
       b: {
         kind: 'recent',
@@ -136,21 +163,23 @@ export async function loadStoryResult({ repository, point, day, month, year = nu
         value: round(recentMean),
         firstYear: recentSeries[0].year,
         lastYear: recentSeries[recentSeries.length - 1].year,
-        series: recentSeries
+        series: recentSeries,
+        estimated: recentSeries.some((s) => s.estimated)
       },
-      birth: birthPeriod ? { period: birthPeriod, year, value: cells.get(birthPeriod) } : null,
+      birth: birthPeriod ? { period: birthPeriod, year, value: birthValue, estimate: birthEstimate } : null,
       // Tercer momento (Misti Sound): el mes del cumpleanos en el anio de nacimiento.
       n: birthPeriod
         ? {
             kind: 'birth',
             period: birthPeriod,
-            value: cells.get(birthPeriod),
+            value: birthValue,
+            estimate: birthEstimate,
             firstYear: year,
             lastYear: year,
-            series: [{ period: birthPeriod, year, value: cells.get(birthPeriod) }]
+            series: [{ period: birthPeriod, year, value: birthValue, estimated: birthEstimate !== null }]
           }
         : null,
-      deltaBirth: birthPeriod ? computeDelta(cells.get(birthPeriod), round(recentMean)) : null,
+      deltaBirth: birthPeriod ? computeDelta(birthValue, round(recentMean)) : null,
       delta: computeDelta(round(pastMean), round(recentMean)),
       baseline: refDs.baseline_period,
       units: refDs.units,
@@ -223,7 +252,7 @@ export function buildBirthdayStory(result, lang) {
     lines.push(
       result.birth.value === null
         ? t(lang, 'storyBirthMissing', { year: result.birth.year })
-        : t(lang, 'storyBirthLine', { year: result.birth.year, month, z: deg(result.birth.value) })
+        : t(lang, 'storyBirthLine', { year: result.birth.year, month, z: deg(result.birth.value) + (result.birth.estimate ? t(lang, `estSpoken_${result.birth.estimate}`) : '') })
     );
   }
   lines.push(t(lang, 'storyCaveat', { km: result.smoothingKm, deg: result.gridDeg }));
@@ -235,7 +264,7 @@ export function storyAnnouncement(result, which, lang) {
   const month = monthName(result.birthday.month, lang);
   if (which === 'n') {
     if (!result.n || result.n.value === null) return t(lang, 'storyBirthMissing', { year: result.birthday.year });
-    return t(lang, 'storyAnnounceBirth', { month, year: result.n.firstYear, z: deg(result.n.value) });
+    return t(lang, 'storyAnnounceBirth', { month, year: result.n.firstYear, z: deg(result.n.value) + (result.n.estimate ? t(lang, `estSpoken_${result.n.estimate}`) : '') });
   }
   if (which === 'a') {
     if (result.a.value === null) return t(lang, 'storyPastMissing', { month, label: pastInline(result, lang) });

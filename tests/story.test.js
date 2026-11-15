@@ -17,7 +17,7 @@ import es from '../src/i18n/es.json';
 import en from '../src/i18n/en.json';
 
 const SHA = 'sha-original';
-function makeDataset(period, centre) {
+function makeDataset(period, centre, ring = 0) {
   return {
     dataset: 'GISTEMP v4',
     period,
@@ -26,7 +26,7 @@ function makeDataset(period, centre) {
     smoothing_radius_km: 1200,
     grid_resolution_deg: 2,
     axes: { lat_centers: [-1, 0, 1], lon_centers: [-1, 0, 1] },
-    values: [0, 0, 0, 0, centre, 0, 0, 0, 0],
+    values: [ring, ring, ring, ring, centre, ring, ring, ring, ring],
     source: { original_file_sha256: SHA }
   };
 }
@@ -40,12 +40,12 @@ for (let y = 1950; y <= 1959; y += 1) VALUES[`${y}-11`] = 0;
 for (let y = 2021; y <= 2025; y += 1) VALUES[`${y}-11`] = 1;
 VALUES['2026-08'] = 2;
 
-function makeRepo(values = VALUES) {
+function makeRepo(values = VALUES, ring = 0) {
   const periods = Object.keys(values).sort();
   const manifest = { files: periods.map((p) => ({ period: p, path: `gistemp/${p}.json` })) };
   const fetchImpl = vi.fn(async (url) => {
     const period = /(\d{4}-\d{2})\.json$/.exec(url)[1];
-    return { ok: true, json: async () => makeDataset(period, values[period]) };
+    return { ok: true, json: async () => makeDataset(period, values[period], ring) };
   });
   return { repo: new GistempRepository({ baseUrl: '', manifest, fetchImpl }), fetchImpl };
 }
@@ -85,17 +85,28 @@ describe('cumpleanos: lectura atomica y relato', () => {
     expect(r.b.series.map((s) => s.year)).toEqual([2022, 2023, 2024, 2025, 2026]);
     expect(r.a.period).toBe('1950-01');
     expect(r.b.period).toBe('2026-01');
-    expect(r.birth).toEqual({ period: '1990-01', year: 1990, value: 0.4 });
+    expect(r.birth).toEqual({ period: '1990-01', year: 1990, value: 0.4, estimate: null });
   });
 
-  it('pocos datos en una ventana => sin promedio (nunca se inventa)', async () => {
+  it('celda sin dato => promedio de celdas vecinas, marcado como estimado', async () => {
     const sparse = { ...VALUES };
     for (let y = 1950; y <= 1955; y += 1) sparse[`${y}-01`] = null;
-    const { repo } = makeRepo(sparse);
+    const { repo } = makeRepo(sparse, 0.2);
     const out = await loadStoryResult({ repository: repo, point: { lat: 0, lon: 0 }, day: 1, month: 1 });
-    expect(out.result.a.value).toBeNull();
-    expect(out.result.delta).toBeNull();
-    expect(reflectionMessage(out.result, 'es')).toBe(es.storyReflectNoData);
+    expect(out.result.a.estimated).toBe(true);
+    expect(out.result.a.series[0].estimated).toBe(true);
+    expect(out.result.a.series[0].value).toBeCloseTo(0.2, 6);
+    expect(out.result.a.value).not.toBeNull();
+  });
+
+  it('mes aun sin publicar => proyeccion con la tendencia', async () => {
+    const { repo } = makeRepo();
+    const today = new Date(Date.UTC(2026, 10, 15));
+    expect(validateBirthday({ day: '3', month: '10', year: '2026' }, repo.availablePeriods, { today })).toMatchObject({ ok: true, projected: true });
+    expect(validateBirthday({ day: '3', month: '12', year: '2026' }, repo.availablePeriods, { today })).toMatchObject({ reason: 'afterLatest' });
+    const out = await loadStoryResult({ repository: repo, point: { lat: 0, lon: 0 }, day: 3, month: 1, year: 2027 });
+    expect(out.result.n.estimate).toBe('projection');
+    expect(out.result.n.value).toBeGreaterThan(out.result.b.value);
   });
 
   it('relato, anuncios y reflexion en ES y EN sin claves sin traducir', async () => {

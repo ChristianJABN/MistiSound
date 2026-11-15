@@ -499,8 +499,12 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     // del resumen (aria-hidden en index.html: no se anuncian dos veces).
     setText(cardAPeriod, story ? t(l, 'momentBeforeTag', { first: a.firstYear }) : periodA);
     setText(cardBPeriod, story ? t(l, 'momentAfterTag', { first: b.firstYear, last: b.lastYear }) : periodB);
-    setText(cardAValue, deg(a.value));
-    setText(cardBValue, deg(b.value));
+    // "≈" = estimado (celdas vecinas) o proyectado; el titulo lo explica.
+    const approx = (v, est) => (v !== null && est ? `≈ ${deg(v)}` : deg(v));
+    setText(cardAValue, approx(a.value, a.estimated));
+    setText(cardBValue, approx(b.value, b.estimated));
+    cardAValue.title = a.estimated ? t(l, 'estNeighbors') : '';
+    cardBValue.title = b.estimated ? t(l, 'estNeighbors') : '';
     setText($('moment-a-title'), story ? t(l, 'momentBeforeTitle', { first: a.firstYear }) : periodA);
     setText($('moment-b-title'), story ? t(l, 'momentAfterTitle', { first: b.firstYear, last: b.lastYear }) : periodB);
     setText($('m-b-text'), t(l, result.delta !== null && result.delta < 0 ? 'momentAfterTextCool' : 'momentAfterText'));
@@ -510,7 +514,9 @@ export function createHistoryPanel({ store, controller, repository, loadCities, 
     if (n) {
       setText($('history-card-n-period'), t(l, 'momentBirthTag', { year: n.firstYear }));
       setText($('moment-n-title'), t(l, 'momentBirthTitle', { year: n.firstYear }));
-      setText($('history-card-n-value'), deg(n.value));
+      const nv = $('history-card-n-value');
+      setText(nv, n.value !== null && n.estimate ? `≈ ${deg(n.value)}` : deg(n.value));
+      nv.title = n.estimate === 'projection' ? t(l, 'estProjection') : n.estimate ? t(l, 'estNeighbors') : '';
     }
     if (listenN) {
       listenN.disabled = state.audio.muted || !n || n.value === null;

@@ -2,6 +2,7 @@
 // asi que vale igual para cualquier ciudad. public/data/co2.json lo genera
 // scripts/prepare_layers.mjs (NASA GISS anual antes de 1979, NOAA GML
 // mensual global desde 1979).
+import { projectCo2 } from '../data/estimates.js';
 
 export async function loadCo2(baseUrl, fetchImpl = fetch) {
   const res = await fetchImpl(`${baseUrl}data/co2.json`);
@@ -35,7 +36,11 @@ export function co2ForStory(data, { month, pastYears, recentYears, birthYear = n
   let birth = null;
   if (birthYear) {
     const key = `${birthYear}-${String(month).padStart(2, '0')}`;
-    birth = { year: birthYear, ppm: birthYear < 1979 ? annual[birthYear] ?? null : monthly[key] ?? null, annual: birthYear < 1979 };
+    const measured = birthYear < 1979 ? annual[birthYear] ?? null : monthly[key] ?? null;
+    // Despues del ultimo mes publicado: proyeccion (mismo mes del anio
+    // anterior + crecimiento reciente), marcada como tal.
+    const projected = measured === null && birthYear >= 1979 ? projectCo2(monthly, birthYear, month) : null;
+    birth = { year: birthYear, ppm: measured ?? projected, annual: birthYear < 1979, projected: measured === null && projected !== null };
   }
   // Serie anual 1950..ultimo anio (grafico "Historico de CO2"): anual GISS antes
   // de 1979; promedio de los meses publicados de NOAA despues.

@@ -10,6 +10,8 @@
 //
 // El color -> DU usa la tabla oficial de GIBS (cada color = un intervalo de
 // 2.5 DU), no una aproximacion.
+import { estimateOzone, OZONE_ESTIMATE_SOURCE } from '../data/estimates.js';
+
 export const OZONE_LAYER = 'OMI_Ozone_TOMS_Total_Column';
 export const OZONE_COLORMAP_URL = `https://gibs.earthdata.nasa.gov/colormaps/v1.3/${OZONE_LAYER}.xml`;
 export const OZONE_PAST_YEARS = [2005, 2006, 2007, 2008, 2009];
@@ -120,11 +122,36 @@ export async function ozoneForStory({ lat, lon, month, recentYears, birthYear = 
     return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
   };
   const birthDu = birthSeries[0]?.du ?? null;
+  // El "antes" es la decada de 1950: no hay medicion, se ESTIMA desde OMI
+  // 2005-2009 del mismo lugar y el deficit de ozono de su latitud (WMO 2022).
+  // Si no hay estimacion fiable (Antartida en primavera) queda en null y la
+  // capa no suena en ese momento.
+  const base = avg(past);
+  const pastEst = estimateOzone(base, { lat, month, year: 1955 });
+  let birth = null;
+  if (birthYear) {
+    if (birthYear < 2005) {
+      birth = { year: birthYear, du: estimateOzone(base, { lat, month, year: birthYear }), measured: false, estimated: true };
+    } else if (birthDu !== null) {
+      birth = { year: birthYear, du: Math.round(birthDu), measured: true, estimated: false };
+    } else {
+      // Mes aun sin imagen publicada: se usa el promedio reciente, marcado.
+      birth = { year: birthYear, du: avg(recent), measured: false, estimated: true };
+    }
+  }
   return {
-    birth: birthYear ? { year: birthYear, du: birthDu === null ? null : Math.round(birthDu), measured: birthYear >= 2005 } : null,
-    past: { mean: avg(past), series: past, firstYear: OZONE_PAST_YEARS[0], lastYear: OZONE_PAST_YEARS.at(-1) },
+    birth,
+    past: {
+      mean: pastEst,
+      estimated: true,
+      firstYear: 1950,
+      lastYear: 1959,
+      series: past,
+      base: { mean: base, firstYear: OZONE_PAST_YEARS[0], lastYear: OZONE_PAST_YEARS.at(-1) }
+    },
     recent: { mean: avg(recent), series: recent },
-    source: 'NASA OMI (Aura) via GIBS'
+    source: 'NASA OMI (Aura) via GIBS',
+    estimateSource: OZONE_ESTIMATE_SOURCE
   };
 }
 
